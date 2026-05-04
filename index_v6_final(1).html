@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>校园洗衣房预约系统</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --blue:#4a90d9;--purple:#6c63ff;--green:#34c759;--orange:#ff9500;--red:#ff3b30;
+  --bg:#f5f6fa;--card:#fff;--text:#1a1a1a;--sub:#888;--border:#e5e5ea;
+  --tab-h:68px;--sb-h:59px;
+}
+html,body{height:100%;font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;background:var(--bg);color:var(--text);}
+body{margin:0;padding:0;}
+#app{width:100vw;height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden;}
+.status-bar{height:var(--sb-h);display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 10px;flex-shrink:0;background:transparent;position:relative;}
+.status-bar::before{content:'';position:absolute;top:12px;left:50%;transform:translateX(-50%);width:min(120px,28vw);height:34px;background:#000;border-radius:20px;z-index:10;}
+.status-bar .sb-time{font-size:15px;font-weight:600;letter-spacing:.3px;}
+.status-bar .sb-right{display:flex;align-items:center;gap:7px;}
+.status-bar .sb-signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+.status-bar .sb-signal span{display:block;width:3px;border-radius:1px;background:currentColor;}
+.status-bar .sb-signal span:nth-child(1){height:4px;}.status-bar .sb-signal span:nth-child(2){height:7px;}.status-bar .sb-signal span:nth-child(3){height:10px;}.status-bar .sb-signal span:nth-child(4){height:12px;}
+.status-bar .sb-batt{display:flex;align-items:center;gap:1px;}
+.status-bar .sb-batt-body{width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;position:relative;}
+.status-bar .sb-batt-body::after{content:'';position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:2px;height:5px;background:currentColor;border-radius:0 1px 1px 0;}
+.status-bar .sb-batt-fill{height:100%;width:80%;background:currentColor;border-radius:1px;}
+.page{display:none;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.page.active{display:block;}
+.page::-webkit-scrollbar{display:none;}
+.tab-bar{height:var(--tab-h);background:#fff;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;flex-shrink:0;z-index:50;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:6px 0;color:var(--sub);-webkit-tap-highlight-color:transparent;user-select:none;}
+.tab-item.active{color:var(--blue);}
+.tab-item .ti{font-size:20px;line-height:1;}
+.tab-item .tl{font-size:10px;}
+.tab-ai{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:6px 0;-webkit-tap-highlight-color:transparent;user-select:none;position:relative;}
+.ai-orb{width:42px;height:42px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(108,99,255,.45);margin-top:-14px;border:3px solid #fff;transition:transform .15s;}
+.tab-ai:active .ai-orb{transform:scale(.9);}
+.tab-ai .tl{font-size:10px;color:var(--purple);font-weight:600;}
+#ai-panel{display:none;position:absolute;bottom:calc(var(--tab-h) + 12px);left:50%;transform:translateX(-50%);width:min(340px,90vw);background:#fff;border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:300;overflow:hidden;animation:popUp .25s ease;}
+#ai-panel.show{display:block;}
+@keyframes popUp{from{opacity:0;transform:translateX(-50%) translateY(12px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.ai-panel-header{background:linear-gradient(135deg,var(--blue),var(--purple));padding:16px 18px 14px;display:flex;align-items:center;gap:12px;}
+.ai-avatar{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:2px solid rgba(255,255,255,.5);}
+.ai-header-info .ai-name{font-size:15px;font-weight:700;color:#fff;}
+.ai-header-info .ai-status{font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;display:flex;align-items:center;gap:4px;}
+.ai-status-dot{width:6px;height:6px;border-radius:50%;background:#4cd964;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.ai-close-btn{margin-left:auto;background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ai-chat-area{padding:16px 16px 8px;max-height:220px;overflow-y:auto;}
+.ai-chat-area::-webkit-scrollbar{display:none;}
+.ai-bubble{background:#f0f4ff;border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:13px;line-height:1.65;color:#333;margin-bottom:10px;}
+.ai-bubble b{color:var(--blue);}
+.ai-bubble-user{background:#e8f1fc;border-radius:14px 14px 4px 14px;padding:10px 14px;font-size:13px;color:#333;margin-bottom:10px;text-align:right;}
+.ai-quick-actions{padding:0 16px 12px;}
+.ai-qa-title{font-size:11px;color:var(--sub);margin-bottom:6px;}
+.ai-qa-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.ai-qa-btn{padding:7px 14px;border-radius:20px;border:1.5px solid var(--blue);color:var(--blue);background:#f0f4ff;font-size:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;}
+.ai-qa-btn:active{background:var(--blue);color:#fff;}
+.ai-input-row{display:flex;gap:6px;padding:12px 16px 16px;border-top:1px solid #f0f0f0;align-items:center;}
+.ai-input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:13px;outline:none;font-family:inherit;transition:border-color .2s;}
+.ai-input:focus{border-color:var(--blue);}
+.ai-mic-btn{width:34px;height:34px;border-radius:50%;background:#f0f4ff;border:1.5px solid var(--blue);color:var(--blue);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.ai-mic-btn.recording{background:var(--red);border-color:var(--red);color:#fff;animation:micPulse 1s infinite;}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.4);}50%{box-shadow:0 0 0 8px rgba(255,59,48,0);}}
+.ai-send-btn{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+/* 语音录音覆盖层 */
+#voice-overlay{display:none;position:absolute;bottom:calc(var(--tab-h) + 12px);left:50%;transform:translateX(-50%);width:min(320px,88vw);background:#fff;border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:400;padding:24px 20px 20px;flex-direction:column;align-items:center;gap:14px;}
+#voice-overlay.show{display:flex;}
+.voice-mic-icon{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--red),#ff6b6b);display:flex;align-items:center;justify-content:center;font-size:28px;animation:micPulse 1s infinite;}
+.voice-waves{display:flex;align-items:center;gap:3px;height:36px;}
+.voice-wave-bar{width:4px;border-radius:2px;background:var(--blue);animation:waveAnim .8s ease-in-out infinite;}
+.voice-wave-bar:nth-child(1){height:10px;animation-delay:0s;}.voice-wave-bar:nth-child(2){height:20px;animation-delay:.1s;}.voice-wave-bar:nth-child(3){height:32px;animation-delay:.2s;}.voice-wave-bar:nth-child(4){height:24px;animation-delay:.3s;}.voice-wave-bar:nth-child(5){height:36px;animation-delay:.4s;}.voice-wave-bar:nth-child(6){height:24px;animation-delay:.5s;}.voice-wave-bar:nth-child(7){height:32px;animation-delay:.6s;}.voice-wave-bar:nth-child(8){height:20px;animation-delay:.7s;}.voice-wave-bar:nth-child(9){height:10px;animation-delay:.8s;}
+@keyframes waveAnim{0%,100%{transform:scaleY(.3);opacity:.5;}50%{transform:scaleY(1);opacity:1;}}
+.voice-status{font-size:14px;font-weight:700;color:var(--red);}
+.voice-tip{font-size:12px;color:var(--sub);text-align:center;line-height:1.6;}
+/* 通用卡片 */
+.card{background:var(--card);border-radius:16px;margin:12px 16px 0;padding:16px;box-shadow:0 1px 8px rgba(0,0,0,.07);}
+.card-title{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.card-title .bar{width:4px;height:16px;border-radius:2px;background:var(--blue);}
+.card-title .bar.orange{background:var(--orange);}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sec-header .more{font-size:12px;color:var(--blue);cursor:pointer;}
+/* 首页 */
+.home-banner{background:linear-gradient(135deg,var(--blue) 0%,var(--purple) 100%);padding:0 20px 24px;color:#fff;}
+.home-banner .status-bar,.home-banner .status-bar .sb-time,.home-banner .status-bar .sb-right,.home-banner .status-bar .sb-batt-body,.home-banner .status-bar .sb-batt-fill{color:#fff;}
+.home-banner .status-bar::before{background:rgba(0,0,0,.55);}
+.lang-btn{position:absolute;right:20px;top:calc(var(--sb-h) + 8px);background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.5);border-radius:20px;padding:4px 12px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;z-index:20;-webkit-tap-highlight-color:transparent;user-select:none;letter-spacing:.5px;}
+.lang-btn:active{background:rgba(255,255,255,.35);}
+.banner-greet{font-size:13px;opacity:.85;margin-bottom:2px;}
+.banner-name{font-size:22px;font-weight:700;margin-bottom:14px;}
+.using-card{background:rgba(255,255,255,.18);border-radius:14px;padding:14px;display:flex;align-items:flex-start;gap:12px;}
+.using-icon{width:48px;height:48px;background:rgba(255,255,255,.28);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.using-info{flex:1;}.using-id{font-size:17px;font-weight:700;}.using-loc{font-size:12px;opacity:.8;margin-top:2px;}
+.using-time-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.time-badge{background:rgba(255,255,255,.28);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;}
+.time-eta{font-size:11px;opacity:.8;}
+.prog-wrap{height:6px;background:rgba(255,255,255,.25);border-radius:3px;margin-top:8px;overflow:hidden;}
+.prog-fill{height:100%;background:#fff;border-radius:3px;}
+.no-using{background:rgba(255,255,255,.18);border-radius:14px;padding:16px;text-align:center;font-size:13px;opacity:.85;line-height:1.7;}
+.notice{background:#fffbe6;border-radius:10px;margin:12px 16px 0;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:12px;color:#8a6d00;}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-radius:16px;margin:12px 16px 0;padding:14px 8px;box-shadow:0 1px 8px rgba(0,0,0,.07);}
+.qe{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;}
+.qe-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.qe span{font-size:11px;color:#555;}
+.loc-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.loc-chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;cursor:pointer;background:#fff;color:#555;transition:all .15s;user-select:none;-webkit-tap-highlight-color:transparent;}
+.loc-chip.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;}
+.device-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.dev-chip{border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;background:#fff;}
+.dev-chip .di{font-size:20px;}.dev-chip .dinfo{flex:1;}.dev-chip .did{font-size:13px;font-weight:700;}.dev-chip .dloc{font-size:11px;color:var(--sub);margin-top:1px;}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}.dot.free{background:var(--green);}.dot.busy{background:var(--red);}.dot.soon{background:var(--orange);}
+.legend{display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:#555;}
+/* 预约页 */
+.date-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;}.date-scroll::-webkit-scrollbar{display:none;}
+.date-chip{flex-shrink:0;width:52px;height:66px;border-radius:14px;border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;background:#fff;transition:all .15s;user-select:none;-webkit-tap-highlight-color:transparent;}
+.date-chip.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.date-chip .dw{font-size:10px;opacity:.7;}.date-chip .dd{font-size:19px;font-weight:700;}.date-chip .dm{font-size:10px;opacity:.7;}
+.loc-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;}
+.loc-label{font-size:13px;color:#555;width:36px;flex-shrink:0;padding-top:6px;}
+.chips-wrap{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{padding:5px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;cursor:pointer;background:#fff;color:#555;transition:all .15s;user-select:none;-webkit-tap-highlight-color:transparent;}
+.chip.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;}
+.loc-hint{font-size:12px;color:var(--sub);margin-top:2px;}
+.book-card{border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;background:#fff;transition:border-color .2s,background .2s;}
+.book-card.selected{border-color:var(--blue);background:#f0f7ff;}
+.bc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.bc-left{display:flex;align-items:center;gap:10px;}
+.bc-icon{width:40px;height:40px;border-radius:10px;background:#e8f1fc;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.bc-icon.dryer{background:#fff3e6;}
+.bc-name{font-size:15px;font-weight:700;}.bc-type{font-size:11px;color:var(--sub);margin-top:2px;}
+.bc-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;margin-left:6px;}
+.bc-tag.w{background:#e8f1fc;color:var(--blue);}.bc-tag.d{background:#fff3e6;color:var(--orange);}
+.status-badge{font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;}
+.status-badge.free{background:#e6f7ee;color:#27ae60;}.status-badge.busy{background:#fdecea;color:var(--red);}.status-badge.soon{background:#fff3e0;color:#f57c00;}
+.time-slots{display:flex;gap:6px;flex-wrap:wrap;}
+.ts{padding:5px 10px;border-radius:8px;font-size:11px;border:1.5px solid var(--border);cursor:pointer;background:#fff;color:#555;transition:all .15s;user-select:none;-webkit-tap-highlight-color:transparent;}
+.ts.avail{border-color:#34c759;color:#27ae60;background:#e6f7ee;}.ts.taken{border-color:#ddd;color:#bbb;background:#f5f5f5;cursor:not-allowed;text-decoration:line-through;}.ts.sel{border-color:var(--blue);color:#fff;background:var(--blue);}
+.book-btn{width:100%;padding:14px;background:linear-gradient(90deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;box-shadow:0 4px 16px rgba(74,144,217,.35);transition:opacity .2s;}
+.book-btn:disabled{background:#ccc;box-shadow:none;cursor:not-allowed;opacity:.7;}
+/* 我的页 */
+.profile-header{background:linear-gradient(135deg,var(--blue),var(--purple));padding:0 20px 32px;display:flex;flex-direction:column;}
+.profile-header .status-bar,.profile-header .status-bar .sb-time,.profile-header .status-bar .sb-right,.profile-header .status-bar .sb-batt-body,.profile-header .status-bar .sb-batt-fill{color:#fff;}
+.profile-header .status-bar::before{background:rgba(0,0,0,.55);}
+.profile-header-inner{display:flex;align-items:center;gap:16px;margin-top:12px;}
+.avatar{width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;font-size:32px;border:3px solid rgba(255,255,255,.5);flex-shrink:0;}
+.p-name{font-size:20px;font-weight:700;color:#fff;}.p-id{font-size:13px;color:rgba(255,255,255,.8);margin-top:3px;}
+.p-tag{display:inline-block;margin-top:6px;background:rgba(255,255,255,.25);border-radius:20px;padding:2px 10px;font-size:11px;color:#fff;}
+.stats-row{display:flex;background:#fff;margin:-16px 16px 0;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.10);overflow:hidden;position:relative;z-index:2;}
+.stat-item{flex:1;padding:14px 8px;text-align:center;border-right:1px solid #f0f0f0;}.stat-item:last-child{border-right:none;}
+.stat-num{font-size:20px;font-weight:700;color:var(--blue);}.stat-lbl{font-size:11px;color:var(--sub);margin-top:2px;}
+.rec-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f5f5f5;}.rec-item:last-child{border-bottom:none;}
+.rec-icon{width:40px;height:40px;border-radius:10px;background:#e8f1fc;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}.rec-icon.dryer{background:#fff3e6;}
+.rec-info{flex:1;}.rec-name{font-size:14px;font-weight:600;}.rec-detail{font-size:12px;color:var(--sub);margin-top:2px;}
+.rec-status{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;}
+.rec-status.ongoing{background:#e8f1fc;color:var(--blue);}.rec-status.done{background:#e6f7ee;color:#27ae60;}.rec-status.cancelled{background:#f5f5f5;color:#999;}
+.menu-list{background:#fff;border-radius:16px;overflow:hidden;margin:12px 16px 0;box-shadow:0 1px 8px rgba(0,0,0,.07);}
+.menu-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #f5f5f5;cursor:pointer;-webkit-tap-highlight-color:transparent;}.menu-item:last-child{border-bottom:none;}
+.menu-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.menu-text{flex:1;font-size:14px;}.menu-arr{color:#c7c7cc;font-size:16px;}
+.badge-new{background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;font-weight:700;}
+.logout-btn{width:calc(100% - 32px);margin:12px 16px 20px;padding:13px;background:#fff;color:var(--red);border:1.5px solid var(--red);border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;display:block;}
+/* 注册页 */
+#page-register{position:absolute;inset:0;background:linear-gradient(160deg,var(--blue) 0%,var(--purple) 100%);z-index:500;display:flex;flex-direction:column;overflow-y:auto;}
+#page-register::-webkit-scrollbar{display:none;}
+.reg-status-bar{height:var(--sb-h);display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 10px;flex-shrink:0;position:relative;}
+.reg-status-bar::before{content:'';position:absolute;top:12px;left:50%;transform:translateX(-50%);width:min(120px,28vw);height:34px;background:rgba(0,0,0,.55);border-radius:20px;z-index:10;}
+.reg-status-bar .sb-time{font-size:15px;font-weight:600;color:#fff;}
+.reg-status-bar .sb-right{display:flex;align-items:center;gap:7px;color:#fff;}
+/* 注册页语言按钮 */
+.reg-lang-btn{background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.5);border-radius:20px;padding:3px 10px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;letter-spacing:.5px;flex-shrink:0;}
+.reg-lang-btn:active{background:rgba(255,255,255,.35);}
+.reg-logo{text-align:center;padding:24px 0 20px;}
+.reg-logo .logo-icon{width:80px;height:80px;border-radius:24px;background:rgba(255,255,255,.2);display:inline-flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:12px;border:2px solid rgba(255,255,255,.3);}
+.reg-logo .logo-title{font-size:22px;font-weight:700;color:#fff;}
+.reg-logo .logo-sub{font-size:13px;color:rgba(255,255,255,.75);margin-top:4px;}
+.reg-card{background:#fff;border-radius:28px 28px 0 0;flex:1;padding:28px 24px 40px;margin-top:8px;}
+.reg-card h2{font-size:20px;font-weight:700;margin-bottom:6px;}
+.reg-card .reg-desc{font-size:13px;color:var(--sub);margin-bottom:24px;line-height:1.6;}
+.reg-field{margin-bottom:18px;}
+.reg-field label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:7px;}
+.reg-field select,.reg-field input{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;color:var(--text);background:#fff;outline:none;appearance:none;-webkit-appearance:none;font-family:inherit;transition:border-color .2s;}
+.reg-field select:focus,.reg-field input:focus{border-color:var(--blue);}
+.reg-field .sel-wrap{position:relative;}
+.reg-field .sel-wrap::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--sub);pointer-events:none;font-size:14px;}
+.reg-field select option:disabled{color:#bbb;}
+.reg-hint{font-size:11px;color:var(--orange);margin-top:5px;display:flex;align-items:center;gap:4px;}
+.reg-btn{width:100%;padding:15px;background:linear-gradient(90deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(74,144,217,.35);margin-top:8px;}
+.reg-btn:active{opacity:.85;}
+/* 规则弹窗 */
+#rules-mask{display:none;position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:400;align-items:flex-end;justify-content:center;}
+#rules-mask.show{display:flex;}
+.rules-box{background:#fff;border-radius:24px 24px 0 0;width:100%;padding:0 0 32px;animation:slideUp .3s ease;max-height:88%;overflow-y:auto;}
+.rules-box::-webkit-scrollbar{display:none;}
+.rules-handle{width:36px;height:4px;border-radius:2px;background:#e0e0e0;margin:12px auto 0;}
+.rules-header{padding:18px 24px 0;display:flex;align-items:center;gap:12px;}
+.rules-header .rh-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.rules-header .rh-title{font-size:18px;font-weight:700;}.rules-header .rh-sub{font-size:12px;color:var(--sub);margin-top:3px;}
+.rules-body{padding:16px 24px 0;}
+.rule-item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #f5f5f5;}.rule-item:last-child{border-bottom:none;}
+.rule-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.rule-num.warn{background:linear-gradient(135deg,var(--orange),var(--red));}
+.rule-content .rule-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.rule-content .rule-desc{font-size:12px;color:#555;line-height:1.65;}
+.rules-footer{padding:20px 24px 0;}
+.rules-agree-btn{width:100%;padding:15px;background:linear-gradient(90deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(74,144,217,.35);}
+/* 确认预约弹窗 */
+.modal-mask{display:none;position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-mask.show{display:flex;}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:100%;padding:24px 20px 40px;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--sub);margin-bottom:20px;line-height:1.6;}
+.modal-info{background:#f5f6fa;border-radius:12px;padding:14px;margin-bottom:20px;}
+.modal-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;}.modal-row:last-child{margin-bottom:0;}
+.modal-row .ml{color:var(--sub);}.modal-row .mv{font-weight:600;}
+.modal-btns{display:flex;gap:10px;}
+.btn-cancel{flex:1;padding:13px;background:#f5f6fa;border:none;border-radius:12px;font-size:15px;color:#555;cursor:pointer;font-weight:600;}
+.btn-confirm{flex:2;padding:13px;background:linear-gradient(90deg,var(--blue),var(--purple));border:none;border-radius:12px;font-size:15px;color:#fff;cursor:pointer;font-weight:700;}
+/* Toast */
+.toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);background:rgba(0,0,0,.78);color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;z-index:600;white-space:nowrap;}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+/* ════ 取送服务页 ════ */
+.delivery-header{background:linear-gradient(135deg,#f7971e,#ffd200);padding:0 20px 20px;color:#fff;}
+.delivery-header .status-bar,.delivery-header .status-bar .sb-time,.delivery-header .status-bar .sb-right,.delivery-header .status-bar .sb-batt-body,.delivery-header .status-bar .sb-batt-fill{color:#fff;}
+.delivery-header .status-bar::before{background:rgba(0,0,0,.55);}
+.delivery-title{text-align:center;padding:4px 0 14px;color:#fff;font-size:17px;font-weight:700;}
+.delivery-tabs{display:flex;background:#fff;margin:12px 16px 0;border-radius:14px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.dtab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.dtab.active{background:linear-gradient(90deg,#f7971e,#ffd200);color:#fff;box-shadow:0 2px 8px rgba(247,151,30,.4);}
+.form-section{margin:12px 16px 0;}
+.form-desc{font-size:13px;color:#7a5800;line-height:1.6;margin-bottom:14px;padding:10px 14px;background:#fff8e6;border-radius:10px;border-left:3px solid #ffd200;}
+.form-field{margin-bottom:14px;}
+.form-field label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:7px;}
+.form-field select,.form-field input,.form-field textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;color:var(--text);background:#fff;outline:none;appearance:none;-webkit-appearance:none;font-family:inherit;transition:border-color .2s;}
+.form-field select:focus,.form-field input:focus,.form-field textarea:focus{border-color:#f7971e;}
+.form-field .sel-wrap{position:relative;}
+.form-field .sel-wrap::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--sub);pointer-events:none;font-size:14px;}
+.form-field textarea{height:72px;resize:none;line-height:1.5;}
+/* 取衣地点二级菜单 */
+.pickup-row{display:flex;gap:8px;align-items:flex-start;}
+.pickup-left{flex:1;display:flex;flex-direction:column;gap:6px;}
+.pickup-right{flex:1;}
+.pickup-right input{width:100%;}
+/* 送达地点二级菜单 */
+.dest-type-row{display:flex;gap:8px;margin-bottom:8px;}
+.dest-type-btn{flex:1;padding:9px 6px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;color:#555;background:#fff;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.dest-type-btn.active{border-color:#f7971e;background:#fff8e6;color:#f7971e;}
+.dest-sub{display:flex;gap:8px;margin-top:4px;}
+.dest-sub .sel-wrap{flex:1;}
+.dest-sub input{flex:1;min-width:0;}
+.fee-btns{display:flex;gap:8px;}
+.fee-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:14px;font-weight:700;cursor:pointer;color:#555;background:#fff;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.fee-btn.active{border-color:#f7971e;background:#fff8e6;color:#f7971e;}
+.post-btn{width:100%;padding:14px;background:linear-gradient(90deg,#f7971e,#ffd200);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;box-shadow:0 4px 16px rgba(247,151,30,.35);margin-bottom:20px;}
+.order-list{margin:12px 16px 20px;}
+.order-card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);border:1.5px solid var(--border);}
+.order-card.accepted{border-color:var(--blue);}
+.order-card.completed{border-color:var(--green);opacity:.88;}
+.order-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+.order-route{flex:1;}
+.order-from{font-size:12px;color:var(--sub);margin-bottom:3px;}
+.order-from span{font-size:14px;font-weight:700;color:var(--text);}
+.order-to{font-size:12px;color:var(--sub);}
+.order-to span{font-size:14px;font-weight:700;color:var(--text);}
+.order-fee{font-size:22px;font-weight:800;color:#27ae60;margin-left:12px;flex-shrink:0;line-height:1;}
+.order-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.order-time{font-size:11px;color:var(--sub);}
+.order-status-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.order-status-tag.pending{background:#fff3e0;color:#f57c00;}
+.order-status-tag.accepted{background:#e8f1fc;color:var(--blue);}
+.order-status-tag.completed{background:#e6f7ee;color:#27ae60;}
+.order-actions{display:flex;gap:8px;}
+.accept-btn{flex:1;padding:10px;background:linear-gradient(90deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.confirm-receipt-btn{flex:1;padding:10px;background:linear-gradient(90deg,var(--green),#20b954);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.order-expanded{margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0;}
+.qr-area{background:#f8f8f8;border-radius:12px;padding:14px;text-align:center;}
+.qr-label{font-size:12px;color:var(--sub);margin-bottom:8px;font-weight:600;}
+.qr-enlarge-btn{margin-top:8px;padding:6px 18px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.completed-badge{background:#e6f7ee;color:#27ae60;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;text-align:center;}
+.empty-orders{text-align:center;padding:40px 20px;color:var(--sub);font-size:13px;line-height:1.8;}
+/* 我的帮取子页 */
+#page-mydelivery{display:none;position:absolute;inset:0;background:var(--bg);z-index:100;flex-direction:column;overflow:hidden;}
+#page-mydelivery.show{display:flex;}
+.mydelivery-header{background:linear-gradient(135deg,#f7971e,#ffd200);padding:0 20px 16px;color:#fff;flex-shrink:0;}
+.mydelivery-header .status-bar,.mydelivery-header .status-bar .sb-time,.mydelivery-header .status-bar .sb-right,.mydelivery-header .status-bar .sb-batt-body,.mydelivery-header .status-bar .sb-batt-fill{color:#fff;}
+.mydelivery-header .status-bar::before{background:rgba(0,0,0,.55);}
+.mydelivery-nav{display:flex;align-items:center;gap:12px;padding:4px 0 12px;}
+.mydelivery-back{background:rgba(255,255,255,.22);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mydelivery-title{font-size:17px;font-weight:700;color:#fff;flex:1;text-align:center;}
+.mydelivery-tabs{display:flex;background:#fff;margin:12px 16px 0;border-radius:14px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.08);flex-shrink:0;}
+.mdtab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.mdtab.active{background:linear-gradient(90deg,#f7971e,#ffd200);color:#fff;box-shadow:0 2px 8px rgba(247,151,30,.4);}
+.mydelivery-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.mydelivery-body::-webkit-scrollbar{display:none;}
+/* 人脸验证弹窗 */
+#face-verify-mask{display:none;position:absolute;inset:0;background:rgba(0,0,0,.72);z-index:500;align-items:center;justify-content:center;}
+#face-verify-mask.show{display:flex;}
+.face-verify-box{background:#fff;border-radius:24px;padding:28px 24px 24px;width:min(300px,84vw);text-align:center;}
+.face-verify-title{font-size:17px;font-weight:700;margin-bottom:4px;}
+.face-verify-sub{font-size:12px;color:var(--sub);margin-bottom:18px;line-height:1.5;}
+.face-frame{width:170px;height:170px;margin:0 auto 14px;position:relative;}
+.face-frame-inner{width:100%;height:100%;border-radius:14px;background:#0a0a1a;overflow:hidden;position:relative;}
+.face-corner{position:absolute;width:18px;height:18px;border-color:#4a90d9;border-style:solid;}
+.face-corner.tl{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+.face-corner.tr{top:-2px;right:-2px;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
+.face-corner.bl{bottom:-2px;left:-2px;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
+.face-corner.br{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.face-scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#4a90d9,transparent);animation:scanLine 2s linear infinite;}
+@keyframes scanLine{0%{top:0;opacity:1;}100%{top:100%;opacity:.2;}}
+.face-dots{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.face-dot-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;opacity:.35;}
+.face-dot-grid span{width:4px;height:4px;border-radius:50%;background:#4a90d9;display:block;}
+.face-status-text{font-size:13px;color:#555;margin-bottom:14px;line-height:1.6;min-height:40px;}
+.face-progress{height:4px;background:#f0f0f0;border-radius:2px;overflow:hidden;margin-bottom:4px;}
+.face-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:2px;transition:width .08s linear;}
+.face-success{color:var(--green);font-weight:700;}
+/* 二维码放大弹窗 */
+#qr-fullscreen-mask{display:none;position:absolute;inset:0;background:rgba(0,0,0,.9);z-index:550;align-items:center;justify-content:center;flex-direction:column;gap:20px;}
+#qr-fullscreen-mask.show{display:flex;}
+.qr-fullscreen-title{color:#fff;font-size:16px;font-weight:700;}
+.qr-fullscreen-close{padding:10px 32px;background:#fff;color:#333;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;}
+/* 取送确认弹窗 */
+#delivery-confirm-mask{display:none;position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;justify-content:center;}
+#delivery-confirm-mask.show{display:flex;}
+.delivery-confirm-box{background:#fff;border-radius:20px 20px 0 0;width:100%;padding:24px 20px 40px;animation:slideUp .25s ease;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- 注册页 -->
+<div id="page-register" style="display:flex">
+  <div class="reg-status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-right">
+      <div class="sb-signal"><span></span><span></span><span></span><span></span></div>
+      <span style="font-size:12px">Wi-Fi</span>
+      <div class="sb-batt"><div class="sb-batt-body"><div class="sb-batt-fill"></div></div></div>
+      <!-- 注册页语言切换按钮 -->
+      <button class="reg-lang-btn" id="reg-lang-btn" onclick="toggleLang()">EN</button>
+    </div>
+  </div>
+  <div class="reg-logo">
+    <div class="logo-icon">🧺</div>
+    <div class="logo-title" data-i18n="appName">校园洗衣房</div>
+    <div class="logo-sub" data-i18n="appSlogan">智能预约 · 随时随地</div>
+  </div>
+  <div class="reg-card">
+    <h2 data-i18n="regTitle">绑定学号</h2>
+    <p class="reg-desc" data-i18n="regDesc">本系统仅供已注册学生使用，请填写真实信息完成身份绑定。</p>
+    <div class="reg-field">
+      <label data-i18n="regSchoolLabel">所属学校</label>
+      <div class="sel-wrap">
+        <select id="reg-school" onchange="onSchoolChange()">
+          <option value="" disabled selected data-i18n="regSchoolPlaceholder">请选择学校</option>
+          <option value="um">澳门大学</option>
+          <option value="must">澳门科技大学</option>
+        </select>
+      </div>
+      <div class="reg-hint" id="school-hint" style="display:none">⚠️ <span data-i18n="regSchoolHint">本系统目前仅向澳门科技大学学生开放，请选择澳门科技大学。</span></div>
+    </div>
+    <div class="reg-field">
+      <label data-i18n="regNameLabel">姓名</label>
+      <input type="text" id="reg-name" data-i18n-ph="regNamePh" placeholder="请输入真实姓名"/>
+    </div>
+    <div class="reg-field">
+      <label data-i18n="regIdLabel">学号</label>
+      <input type="text" id="reg-id" data-i18n-ph="regIdPh" placeholder="请输入学号"/>
+    </div>
+    <button class="reg-btn" onclick="doRegister()" data-i18n="regBtn">进入系统</button>
+  </div>
+</div>
+
+<!-- 首页 -->
+<div id="page-home" class="page active">
+  <div class="home-banner" style="position:relative">
+    <div class="status-bar">
+      <span class="sb-time">9:41</span>
+      <div class="sb-right">
+        <div class="sb-signal"><span></span><span></span><span></span><span></span></div>
+        <span style="font-size:12px">Wi-Fi</span>
+        <div class="sb-batt"><div class="sb-batt-body"><div class="sb-batt-fill"></div></div></div>
+      </div>
+    </div>
+    <button class="lang-btn" id="lang-btn" onclick="toggleLang()">EN</button>
+    <div class="banner-greet" id="banner-greet">早上好 👋</div>
+    <div class="banner-name" id="banner-name">同学</div>
+    <div id="home-using-card"></div>
+  </div>
+  <div class="notice">📢 <span data-i18n="notice">A座3楼洗衣机 W-A301 维修中，暂停使用</span></div>
+  <div class="quick-grid">
+    <div class="qe" onclick="switchTab('booking')">
+      <div class="qe-icon" style="background:#e8f1fc">📅</div><span data-i18n="qBook">立即预约</span>
+    </div>
+    <div class="qe" onclick="switchTab('profile')">
+      <div class="qe-icon" style="background:#e6f7ee">📋</div><span data-i18n="qMyBook">我的预约</span>
+    </div>
+    <div class="qe" onclick="showToast(T('toastRepair'))">
+      <div class="qe-icon" style="background:#fdecea">🔧</div><span data-i18n="qRepair">一键报修</span>
+    </div>
+    <div class="qe" onclick="showToast(T('toastStats'))">
+      <div class="qe-icon" style="background:#f0eeff">📊</div><span data-i18n="qStats">使用统计</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sec-header">
+      <div class="card-title" style="margin-bottom:0"><div class="bar"></div><span data-i18n="washerStatus">洗衣机状态</span></div>
+    </div>
+    <div class="loc-filter" id="hb-filter">
+      <div class="loc-chip active" data-b="all" onclick="hFilter(this,'b')" data-i18n-chip="all">全部</div>
+      <div class="loc-chip" data-b="A" onclick="hFilter(this,'b')">A</div>
+      <div class="loc-chip" data-b="B" onclick="hFilter(this,'b')">B</div>
+      <div class="loc-chip" data-b="C" onclick="hFilter(this,'b')">C</div>
+      <div class="loc-chip" data-b="D" onclick="hFilter(this,'b')">D</div>
+      <div class="loc-chip" data-b="P" onclick="hFilter(this,'b')">P</div>
+    </div>
+    <div class="loc-filter" id="hf-filter">
+      <div class="loc-chip active" data-f="all" onclick="hFilter(this,'f')" data-i18n="all">全部</div>
+      <div class="loc-chip" data-f="1" onclick="hFilter(this,'f')" data-i18n="floor1">1楼</div>
+      <div class="loc-chip" data-f="2" onclick="hFilter(this,'f')" data-i18n="floor2">2楼</div>
+      <div class="loc-chip" data-f="3" onclick="hFilter(this,'f')" data-i18n="floor3">3楼</div>
+      <div class="loc-chip" data-f="4" onclick="hFilter(this,'f')" data-i18n="floor4">4楼</div>
+      <div class="loc-chip" data-f="5" onclick="hFilter(this,'f')" data-i18n="floor5">5楼</div>
+    </div>
+    <div class="device-grid" id="home-washer-list"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="dot free"></div><span data-i18n="free">空闲</span></div>
+      <div class="legend-item"><div class="dot soon"></div><span data-i18n="soon">即将空闲</span></div>
+      <div class="legend-item"><div class="dot busy"></div><span data-i18n="busy">使用中</span></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <div class="sec-header">
+      <div class="card-title" style="margin-bottom:0"><div class="bar orange"></div><span data-i18n="dryerStatus">烘干机状态</span></div>
+    </div>
+    <div class="loc-filter" id="hdb-filter">
+      <div class="loc-chip active" data-db="all" onclick="hDFilter(this,'b')" data-i18n="all">全部</div>
+      <div class="loc-chip" data-db="A" onclick="hDFilter(this,'b')">A</div>
+      <div class="loc-chip" data-db="B" onclick="hDFilter(this,'b')">B</div>
+      <div class="loc-chip" data-db="C" onclick="hDFilter(this,'b')">C</div>
+      <div class="loc-chip" data-db="D" onclick="hDFilter(this,'b')">D</div>
+      <div class="loc-chip" data-db="P" onclick="hDFilter(this,'b')">P</div>
+    </div>
+    <div class="loc-filter" id="hdf-filter">
+      <div class="loc-chip active" data-df="all" onclick="hDFilter(this,'f')" data-i18n="all">全部</div>
+      <div class="loc-chip" data-df="1" onclick="hDFilter(this,'f')" data-i18n="floor1">1楼</div>
+      <div class="loc-chip" data-df="2" onclick="hDFilter(this,'f')" data-i18n="floor2">2楼</div>
+      <div class="loc-chip" data-df="3" onclick="hDFilter(this,'f')" data-i18n="floor3">3楼</div>
+      <div class="loc-chip" data-df="4" onclick="hDFilter(this,'f')" data-i18n="floor4">4楼</div>
+      <div class="loc-chip" data-df="5" onclick="hDFilter(this,'f')" data-i18n="floor5">5楼</div>
+    </div>
+    <div class="device-grid" id="home-dryer-list"></div>
+  </div>
+</div>
+
+<!-- 预约页 -->
+<div id="page-booking" class="page">
+  <div class="home-banner" style="padding-bottom:20px;position:relative">
+    <div class="status-bar">
+      <span class="sb-time">9:41</span>
+      <div class="sb-right">
+        <div class="sb-signal"><span></span><span></span><span></span><span></span></div>
+        <span style="font-size:12px">Wi-Fi</span>
+        <div class="sb-batt"><div class="sb-batt-body"><div class="sb-batt-fill"></div></div></div>
+      </div>
+    </div>
+    <div style="text-align:center;color:#fff;font-size:17px;font-weight:700;padding:4px 0 0" data-i18n="bookTitle">预约洗衣机 / 烘干机</div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="bar"></div><span data-i18n="selectDate">选择日期</span></div>
+    <div class="date-scroll" id="date-scroll"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="bar"></div><span data-i18n="selectLoc">选择位置</span></div>
+    <div class="loc-row">
+      <div class="loc-label" data-i18n="building">楼座</div>
+      <div class="chips-wrap" id="book-building">
+        <div class="chip active" data-val="A" onclick="bookSel(this,'building')">A</div>
+        <div class="chip" data-val="B" onclick="bookSel(this,'building')">B</div>
+        <div class="chip" data-val="C" onclick="bookSel(this,'building')">C</div>
+        <div class="chip" data-val="D" onclick="bookSel(this,'building')">D</div>
+        <div class="chip" data-val="P" onclick="bookSel(this,'building')">P</div>
+      </div>
+    </div>
+    <div class="loc-row">
+      <div class="loc-label" data-i18n="floor">楼层</div>
+      <div class="chips-wrap" id="book-floor">
+        <div class="chip active" data-val="1" onclick="bookSel(this,'floor')" data-i18n="floor1">1楼</div>
+        <div class="chip" data-val="2" onclick="bookSel(this,'floor')" data-i18n="floor2">2楼</div>
+        <div class="chip" data-val="3" onclick="bookSel(this,'floor')" data-i18n="floor3">3楼</div>
+        <div class="chip" data-val="4" onclick="bookSel(this,'floor')" data-i18n="floor4">4楼</div>
+        <div class="chip" data-val="5" onclick="bookSel(this,'floor')" data-i18n="floor5">5楼</div>
+      </div>
+    </div>
+    <div class="loc-hint"><span data-i18n="currentLoc">当前选择：</span><span id="loc-hint-text">A座 1楼洗衣房</span></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><div class="bar"></div><span data-i18n="availDevices">可预约设备</span></div>
+    <div id="book-device-list"></div>
+    <button class="book-btn" id="book-btn" disabled onclick="openModal()" data-i18n="selectSlotFirst">请先选择时间段</button>
+  </div>
+</div>
+
+<!-- 取送服务页 -->
+<div id="page-delivery" class="page">
+  <div class="delivery-header">
+    <div class="status-bar">
+      <span class="sb-time">9:41</span>
+      <div class="sb-right">
+        <div class="sb-signal"><span></span><span></span><span></span><span></span></div>
+        <span style="font-size:12px">Wi-Fi</span>
+        <div class="sb-batt"><div class="sb-batt-body"><div class="sb-batt-fill"></div></div></div>
+      </div>
+    </div>
+    <div class="delivery-title" data-i18n="deliveryTitle">🛵 取送服务</div>
+  </div>
+  <div class="delivery-tabs">
+    <div class="dtab active" id="dtab-request" onclick="switchDTab('request')" data-i18n="tabRequest">帮我取</div>
+    <div class="dtab" id="dtab-accept" onclick="switchDTab('accept')" data-i18n="tabAccept">我要帮取</div>
+  </div>
+
+  <!-- 帮我取 -->
+  <div id="dsub-request">
+    <div class="form-section">
+      <div class="form-desc" data-i18n="requestDesc">发布取衣服务，让同学帮你把洗好的衣服送到宿舍</div>
+
+      <!-- 取衣地点：二级菜单（楼栋→楼层）+ 机器编号 -->
+      <div class="form-field">
+        <label data-i18n="pickupLoc">取衣地点</label>
+        <div class="pickup-row">
+          <div class="pickup-left">
+            <div class="sel-wrap">
+              <select id="pickup-building" onchange="onPickupBuildingChange()">
+                <option value="" data-i18n-opt="pickupBldPh">请选择楼栋</option>
+                <option value="A">A座</option>
+                <option value="B">B座</option>
+                <option value="C">C座</option>
+                <option value="D">D座</option>
+                <option value="P">P座</option>
+              </select>
+            </div>
+            <div class="sel-wrap">
+              <select id="pickup-floor" onchange="onPickupFloorChange()" disabled>
+                <option value="" data-i18n-opt="pickupFloorPh">请选择楼层</option>
+              </select>
+            </div>
+          </div>
+          <div class="pickup-right">
+            <input type="text" id="pickup-machine" data-i18n-ph="pickupMachinePh" placeholder="机器编号（如W-A101）"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- 送达地点：二级菜单（烘干/宿舍）-->
+      <div class="form-field">
+        <label data-i18n="deliveryLoc">送达地点</label>
+        <div class="dest-type-row">
+          <div class="dest-type-btn active" id="dest-type-dry" onclick="selDestType('dry')" data-i18n="destTypeDry">送去烘干</div>
+          <div class="dest-type-btn" id="dest-type-dorm" onclick="selDestType('dorm')" data-i18n="destTypeDorm">送回宿舍</div>
+        </div>
+        <!-- 烘干机选项 -->
+        <div id="dest-dry-area" class="dest-sub">
+          <input type="text" id="dest-dryer-num" data-i18n-ph="destDryerNumPh" placeholder="烘干机编号或"任意烘干机""/>
+        </div>
+        <!-- 宿舍选项 -->
+        <div id="dest-dorm-area" class="dest-sub" style="display:none">
+          <div class="sel-wrap">
+            <select id="dest-building">
+              <option value="" data-i18n-opt="destBldPh">楼栋</option>
+              <option value="A1">A1栋</option><option value="A2">A2栋</option>
+              <option value="B1">B1栋</option><option value="B2">B2栋</option>
+              <option value="C1">C1栋</option><option value="C2">C2栋</option>
+              <option value="D1">D1栋</option><option value="D2">D2栋</option>
+              <option value="E1">E1栋</option><option value="E2">E2栋</option>
+            </select>
+          </div>
+          <input type="text" id="dest-room" data-i18n-ph="destRoomPlaceholder" placeholder="宿舍号，如 101"/>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label data-i18n="serviceFee">服务费用</label>
+        <div class="fee-btns">
+          <div class="fee-btn active" data-fee="3" onclick="selFee(this)">3 MOP</div>
+          <div class="fee-btn" data-fee="4" onclick="selFee(this)">4 MOP</div>
+          <div class="fee-btn" data-fee="5" onclick="selFee(this)">5 MOP</div>
+        </div>
+      </div>
+      <div class="form-field">
+        <label data-i18n="remarkLabel">备注（可选）</label>
+        <textarea id="order-remark" data-i18n-ph="remarkPh" placeholder="如：衣服在3号机，蓝色袋子"></textarea>
+      </div>
+      <!-- 我的下单记录（帮我取） -->
+      <div style="margin-bottom:6px">
+        <div class="card-title" style="font-size:13px;margin-bottom:8px"><div class="bar" style="background:#f7971e"></div><span data-i18n="myPostedOrders">我的下单记录</span></div>
+        <div id="my-posted-list"></div>
+      </div>
+      <button class="post-btn" onclick="openDeliveryConfirm()" data-i18n="postOrder">发布订单</button>
+    </div>
+  </div>
+
+  <!-- 我要帮取 -->
+  <div id="dsub-accept" style="display:none">
+    <div class="order-list" id="order-list"></div>
+  </div>
+</div>
+
+<!-- 我的 -->
+<div id="page-profile" class="page">
+  <div class="profile-header">
+    <div class="status-bar">
+      <span class="sb-time">9:41</span>
+      <div class="sb-right">
+        <div class="sb-signal"><span></span><span></span><span></span><span></span></div>
+        <span style="font-size:12px">Wi-Fi</span>
+        <div class="sb-batt"><div class="sb-batt-body"><div class="sb-batt-fill"></div></div></div>
+      </div>
+    </div>
+    <div class="profile-header-inner">
+      <div class="avatar">👤</div>
+      <div>
+        <div class="p-name" id="prof-name">李明</div>
+        <div class="p-id" id="prof-id"><span data-i18n="studentId">学号：</span><span id="prof-id-num">2021010234</span></div>
+        <div class="p-tag" id="prof-tag" data-i18n="profTag">计算机学院 · 大三</div>
+      </div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num" id="stat-total">28</div><div class="stat-lbl" data-i18n="totalUse">累计使用</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-month">3</div><div class="stat-lbl" data-i18n="monthBook">本月预约</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-noshow">0</div><div class="stat-lbl" data-i18n="noshow">违约次数</div></div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <div class="sec-header">
+      <div class="card-title" style="margin-bottom:0"><div class="bar"></div><span data-i18n="myRecords">我的预约记录</span></div>
+      <span class="more" data-i18n="viewAll">全部 ›</span>
+    </div>
+    <div id="profile-records"></div>
+  </div>
+  <div class="menu-list">
+    <!-- 我的帮取入口 -->
+    <div class="menu-item" onclick="openMyDelivery()">
+      <div class="menu-icon" style="background:#fff8e6">🛵</div>
+      <span class="menu-text" data-i18n="menuMyDelivery">我的帮取</span>
+      <span class="badge-new">NEW</span><span class="menu-arr">›</span>
+    </div>
+    <div class="menu-item" onclick="showToast(T('toastRepair'))">
+      <div class="menu-icon" style="background:#fdecea">🔧</div>
+      <span class="menu-text" data-i18n="menuRepair">一键报修</span>
+      <span class="badge-new">NEW</span><span class="menu-arr">›</span>
+    </div>
+    <div class="menu-item" onclick="showToast(T('toastFeedback'))">
+      <div class="menu-icon" style="background:#e6f7ee">💬</div>
+      <span class="menu-text" data-i18n="menuFeedback">意见反馈</span><span class="menu-arr">›</span>
+    </div>
+    <div class="menu-item" onclick="showToast(T('toastHelp'))">
+      <div class="menu-icon" style="background:#e8f1fc">❓</div>
+      <span class="menu-text" data-i18n="menuHelp">帮助与常见问题</span><span class="menu-arr">›</span>
+    </div>
+    <div class="menu-item" onclick="showToast(T('toastNotify'))">
+      <div class="menu-icon" style="background:#f0eeff">🔔</div>
+      <span class="menu-text" data-i18n="menuNotify">消息通知设置</span><span class="menu-arr">›</span>
+    </div>
+    <div class="menu-item" onclick="showToast(T('toastAccount'))">
+      <div class="menu-icon" style="background:#fff3e6">⚙️</div>
+      <span class="menu-text" data-i18n="menuAccount">账号设置</span><span class="menu-arr">›</span>
+    </div>
+  </div>
+  <button class="logout-btn" onclick="doLogout()" data-i18n="logout">退出登录</button>
+</div>
+
+<!-- 我的帮取子页 -->
+<div id="page-mydelivery">
+  <div class="mydelivery-header">
+    <div class="status-bar">
+      <span class="sb-time">9:41</span>
+      <div class="sb-right">
+        <div class="sb-signal"><span></span><span></span><span></span><span></span></div>
+        <span style="font-size:12px">Wi-Fi</span>
+        <div class="sb-batt"><div class="sb-batt-body"><div class="sb-batt-fill"></div></div></div>
+      </div>
+    </div>
+    <div class="mydelivery-nav">
+      <button class="mydelivery-back" onclick="closeMyDelivery()">‹</button>
+      <div class="mydelivery-title" data-i18n="menuMyDelivery">我的帮取</div>
+      <div style="width:32px"></div>
+    </div>
+  </div>
+  <div class="mydelivery-tabs">
+    <div class="mdtab active" id="mdtab-posted" onclick="switchMDTab('posted')" data-i18n="mdTabPosted">帮我取记录</div>
+    <div class="mdtab" id="mdtab-accepted" onclick="switchMDTab('accepted')" data-i18n="mdTabAccepted">送货记录</div>
+  </div>
+  <div class="mydelivery-body">
+    <div id="mdsub-posted">
+      <div class="order-list" id="md-posted-list"></div>
+    </div>
+    <div id="mdsub-accepted" style="display:none">
+      <div class="order-list" id="md-accepted-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <div class="tab-item active" id="tab-home" onclick="switchTab('home')">
+    <span class="ti">🏠</span><span class="tl" data-i18n="tabHome">首页</span>
+  </div>
+  <div class="tab-item" id="tab-booking" onclick="switchTab('booking')">
+    <span class="ti">📅</span><span class="tl" data-i18n="tabBook">预约</span>
+  </div>
+  <div class="tab-ai" onclick="toggleAI()" id="tab-ai">
+    <div class="ai-orb">🤖</div>
+    <span class="tl" data-i18n="tabAI">AI助手</span>
+  </div>
+  <div class="tab-item" id="tab-delivery" onclick="switchTab('delivery')">
+    <span class="ti">🛵</span><span class="tl" data-i18n="tabDelivery">取送</span>
+  </div>
+  <div class="tab-item" id="tab-profile" onclick="switchTab('profile')">
+    <span class="ti">👤</span><span class="tl" data-i18n="tabMe">我的</span>
+  </div>
+</div>
+
+<!-- AI 助手小窗口 -->
+<div id="ai-panel">
+  <div class="ai-panel-header">
+    <div class="ai-avatar">🤖</div>
+    <div class="ai-header-info">
+      <div class="ai-name" data-i18n="aiName">WashBot 智能助手</div>
+      <div class="ai-status"><span class="ai-status-dot"></span><span data-i18n="aiOnline">在线·随时帮你</span></div>
+    </div>
+    <button class="ai-close-btn" onclick="toggleAI()">×</button>
+  </div>
+  <div class="ai-chat-area" id="ai-chat">
+    <div class="ai-bubble" id="ai-greeting"></div>
+  </div>
+  <div class="ai-quick-actions">
+    <div class="ai-qa-title" data-i18n="aiQuickTitle">快捷指令</div>
+    <div class="ai-qa-btns">
+      <button class="ai-qa-btn" onclick="aiQuick('book')" data-i18n="aiQBook">📅 预约洗衣</button>
+      <button class="ai-qa-btn" onclick="aiQuick('status')" data-i18n="aiQStatus">🔍 查机器状态</button>
+      <button class="ai-qa-btn" onclick="aiQuick('time')" data-i18n="aiQTime">⏰ 剩余时间</button>
+      <button class="ai-qa-btn" onclick="aiQuick('records')" data-i18n="aiQRecords">📝 我的预约</button>
+    </div>
+  </div>
+  <div class="ai-input-row">
+    <input class="ai-input" id="ai-input" placeholder="输入指令或问题…" onkeydown="if(event.key==='Enter')aiSend()"/>
+    <button class="ai-mic-btn" id="ai-mic-btn" onclick="startVoiceInput()" title="语音输入">🎤</button>
+    <button class="ai-send-btn" onclick="aiSend()">➤</button>
+  </div>
+</div>
+
+<!-- 语音录音动画覆盖层 -->
+<div id="voice-overlay">
+  <div class="voice-mic-icon">🎤</div>
+  <div class="voice-waves">
+    <div class="voice-wave-bar"></div><div class="voice-wave-bar"></div><div class="voice-wave-bar"></div>
+    <div class="voice-wave-bar"></div><div class="voice-wave-bar"></div><div class="voice-wave-bar"></div>
+    <div class="voice-wave-bar"></div><div class="voice-wave-bar"></div><div class="voice-wave-bar"></div>
+  </div>
+  <div class="voice-status" id="voice-status-text">录音中…</div>
+  <div class="voice-tip" id="voice-tip-text">可以告诉我你的需求，我可以帮你预约洗衣机、发布取衣服务等</div>
+</div>
+
+<!-- 规则弹窗 -->
+<div id="rules-mask">
+  <div class="rules-box">
+    <div class="rules-handle"></div>
+    <div class="rules-header">
+      <div class="rh-icon">📋</div>
+      <div>
+        <div class="rh-title" data-i18n="rulesTitle">使用须知</div>
+        <div class="rh-sub" data-i18n="rulesSub">请仔细阅读以下规则后使用</div>
+      </div>
+    </div>
+    <div class="rules-body">
+      <div class="rule-item"><div class="rule-num">1</div><div class="rule-content"><div class="rule-title" data-i18n="rule1Title">仅限校内学生使用</div><div class="rule-desc" data-i18n="rule1Desc">本系统需绑定校园学号方可使用，仅向澳门科技大学在读学生开放，请勿将账号借予他人。</div></div></div>
+      <div class="rule-item"><div class="rule-num">2</div><div class="rule-content"><div class="rule-title" data-i18n="rule2Title">洗完即时通知</div><div class="rule-desc" data-i18n="rule2Desc">衣物洗涤完成后，App 将立即推送「洗衣完成」通知，请及时前往取衣，避免占用机器影响他人使用。</div></div></div>
+      <div class="rule-item"><div class="rule-num warn">3</div><div class="rule-content"><div class="rule-title" data-i18n="rule3Title">爽约警告</div><div class="rule-desc" data-i18n="rule3Desc">若预约后未在规定时间内使用（No-show），系统将自动发送警告通知，该次预约记录将标记为违约。</div></div></div>
+      <div class="rule-item"><div class="rule-num warn">4</div><div class="rule-content"><div class="rule-title" data-i18n="rule4Title">多次爽约将被封号</div><div class="rule-desc" data-i18n="rule4Desc">累计爽约 3 次，账户将被暂停使用，需联系管理员申诉解封。请珍惜预约名额，共同维护公平的使用环境。</div></div></div>
+    </div>
+    <div class="rules-footer">
+      <button class="rules-agree-btn" onclick="closeRules()" data-i18n="rulesAgree">我已阅读，开始使用</button>
+    </div>
+  </div>
+</div>
+
+<!-- 确认预约弹窗 -->
+<div class="modal-mask" id="modal-mask" onclick="maskClick(event)">
+  <div class="modal-box">
+    <div class="modal-title" data-i18n="confirmTitle">确认预约</div>
+    <div class="modal-sub" data-i18n="confirmSub">请确认以下预约信息，提交后将占用该时间段</div>
+    <div class="modal-info">
+      <div class="modal-row"><span class="ml" data-i18n="mDevice">设备</span><span class="mv" id="m-device">—</span></div>
+      <div class="modal-row"><span class="ml" data-i18n="mLoc">位置</span><span class="mv" id="m-loc">—</span></div>
+      <div class="modal-row"><span class="ml" data-i18n="mDate">日期</span><span class="mv" id="m-date">—</span></div>
+      <div class="modal-row"><span class="ml" data-i18n="mTime">时间段</span><span class="mv" id="m-time">—</span></div>
+      <div class="modal-row"><span class="ml" data-i18n="mDur">预计时长</span><span class="mv" id="m-dur">—</span></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()" data-i18n="cancel">取消</button>
+      <button class="btn-confirm" onclick="confirmBook()" data-i18n="confirmBook">确认预约</button>
+    </div>
+  </div>
+</div>
+
+<!-- 取送确认弹窗 -->
+<div id="delivery-confirm-mask" onclick="deliveryMaskClick(event)">
+  <div class="delivery-confirm-box">
+    <div class="modal-title" data-i18n="confirmOrderTitle">确认发布订单</div>
+    <div class="modal-sub" data-i18n="confirmOrderSub">请确认以下取送信息</div>
+    <div class="modal-info" id="delivery-confirm-info"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDeliveryConfirm()" data-i18n="cancel">取消</button>
+      <button class="btn-confirm" style="background:linear-gradient(90deg,#f7971e,#ffd200);" onclick="confirmPostOrder()" data-i18n="postOrder">发布订单</button>
+    </div>
+  </div>
+</div>
+
+<!-- 人脸验证弹窗 -->
+<div id="face-verify-mask">
+  <div class="face-verify-box">
+    <div class="face-verify-title" data-i18n="faceVerifyTitle">身份验证</div>
+    <div class="face-verify-sub" data-i18n="faceVerifySub">接单前需进行人脸识别验证</div>
+    <div class="face-frame">
+      <div class="face-frame-inner">
+        <div class="face-dots">
+          <div class="face-dot-grid">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <div class="face-scan-line"></div>
+      </div>
+      <div class="face-corner tl"></div><div class="face-corner tr"></div>
+      <div class="face-corner bl"></div><div class="face-corner br"></div>
+    </div>
+    <div class="face-progress"><div class="face-progress-fill" id="face-progress-fill" style="width:0%"></div></div>
+    <div class="face-status-text" id="face-status-text">正在识别身份，请保持正面对准摄像头</div>
+  </div>
+</div>
+
+<!-- 二维码放大弹窗 -->
+<div id="qr-fullscreen-mask">
+  <div class="qr-fullscreen-title" id="qr-fullscreen-title">门禁二维码</div>
+  <canvas id="qr-fullscreen-canvas" width="240" height="240" style="border-radius:12px;background:#fff;padding:10px;"></canvas>
+  <button class="qr-fullscreen-close" onclick="closeQRFullscreen()" data-i18n="closeBtn">关闭</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+</div><!-- /#app -->
+
+<script>
+// ══════════════════════════════════════════════════
+// 国际化
+// ══════════════════════════════════════════════════
+const I18N = {
+  zh:{
+    appName:'校园洗衣房',appSlogan:'智能预约 · 随时随地',
+    regTitle:'绑定学号',regDesc:'本系统仅供已注册学生使用，请填写真实信息完成身份绑定。',
+    regSchoolLabel:'所属学校',regSchoolPlaceholder:'请选择学校',
+    schoolUM:'澳门大学',schoolMUST:'澳门科技大学',
+    regSchoolHint:'本系统目前仅向澳门科技大学学生开放，请选择澳门科技大学。',
+    regNameLabel:'姓名',regNamePh:'请输入真实姓名',
+    regIdLabel:'学号',regIdPh:'请输入学号',
+    regBtn:'进入系统',
+    greet:'早上好 👋',notice:'A座3楼洗衣机 W-A301 维修中，暂停使用',
+    qBook:'立即预约',qMyBook:'我的预约',qRepair:'一键报修',qStats:'使用统计',
+    washerStatus:'洗衣机状态',dryerStatus:'烘干机状态',
+    all:'全部',allFloors:'全部楼层',
+    floor1:'1楼',floor2:'2楼',floor3:'3楼',floor4:'4楼',floor5:'5楼',
+    free:'空闲',soon:'即将空闲',busy:'使用中',
+    bookTitle:'预约洗衣机 / 烘干机',
+    selectDate:'选择日期',selectLoc:'选择位置',
+    building:'楼座',floor:'楼层',
+    currentLoc:'当前选择：',
+    availDevices:'可预约设备',selectSlotFirst:'请先选择时间段',
+    studentId:'学号：',profTag:'计算机学院 · 大三',
+    totalUse:'累计使用',monthBook:'本月预约',noshow:'违约次数',
+    myRecords:'我的预约记录',viewAll:'全部 ›',
+    menuRepair:'一键报修',menuFeedback:'意见反馈',
+    menuHelp:'帮助与常见问题',menuNotify:'消息通知设置',menuAccount:'账号设置',
+    menuMyDelivery:'我的帮取',
+    logout:'退出登录',
+    tabHome:'首页',tabBook:'预约',tabMe:'我的',tabDelivery:'取送',
+    rulesTitle:'使用须知',rulesSub:'请仔细阅读以下规则后使用',
+    rule1Title:'仅限校内学生使用',
+    rule1Desc:'本系统需绑定校园学号方可使用，仅向澳门科技大学在读学生开放，请勿将账号借予他人。',
+    rule2Title:'洗完即时通知',
+    rule2Desc:'衣物洗涤完成后，App 将立即推送「洗衣完成」通知，请及时前往取衣，避免占用机器影响他人使用。',
+    rule3Title:'爽约警告',
+    rule3Desc:'若预约后未在规定时间内使用（No-show），系统将自动发送警告通知，该次预约记录将标记为违约。',
+    rule4Title:'多次爽约将被封号',
+    rule4Desc:'累计爽约 3 次，账户将被暂停使用，需联系管理员申诉解封。请珍惜预约名额，共同维护公平的使用环境。',
+    rulesAgree:'我已阅读，开始使用',
+    confirmTitle:'确认预约',confirmSub:'请确认以下预约信息，提交后将占用该时间段',
+    mDevice:'设备',mLoc:'位置',mDate:'日期',mTime:'时间段',mDur:'预计时长',
+    cancel:'取消',confirmBook:'确认预约',
+    toastRepair:'报修功能即将上线',toastStats:'统计功能即将上线',
+    toastFeedback:'感谢您的反馈！',toastHelp:'帮助中心即将上线',
+    toastNotify:'通知设置即将上线',toastAccount:'账号设置即将上线',
+    toastLogout:'已退出登录',toastBooked:'🎉 预约成功！',
+    washerLabel:'洗衣机',dryerLabel:'烘干机',
+    washerSpec:'滚筒·10kg·约45分钟/次',dryerSpec:'热泵·8kg·约60分钟/次',
+    statusFree:'空闲',statusBusy:'使用中',statusSoon:'即将空闲',
+    noDevice:'暂无符合条件的设备',
+    usingWasher:'洗衣机',usingDryer:'烘干机',
+    remaining:'剩余',minutes:'分钟',estFinish:'预计',
+    noUsing:'当前没有正在使用的设备\n点击「立即预约」开始预约',
+    locRoom:'洗衣房',locBuilding:'座',locFloor:'楼',
+    recOngoing:'进行中',recDone:'已完成',recCancelled:'已取消',
+    today:'今天',tomorrow:'明天',
+    weekdays:['日','一','二','三','四','五','六'],
+    months:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    weekPrefix:'周',aboutDur:'约',bookConfirmBtn:'确认预约 · ',at:' @ ',
+    durWasher:'约 45 分钟',durDryer:'约 60 分钟',
+    greetMorning:'早上好 👋',greetAfternoon:'下午好 👋',greetEvening:'晚上好 👋',
+    studentSuffix:'同学',
+    regErrSchool:'请选择澳门科技大学',regErrName:'请输入姓名',regErrId:'请输入学号',
+    regErrSchoolWrong:'本系统仅向澳门科技大学学生开放',
+    tabAI:'AI助手',
+    aiName:'WashBot 智能助手',aiOnline:'在线·随时帮你',
+    aiQuickTitle:'快捷指令',
+    aiQBook:'📅 预约洗衣',aiQStatus:'🔍 查机器状态',aiQTime:'⏰ 剩余时间',aiQRecords:'📝 我的预约',
+    aiInputPh:'输入指令或问题…',
+    aiGreeting:'👋 你好！我是 <b>WashBot</b>，你的洗衣房智能助手。我可以帮你：<br><br>📅 <b>预约洗衣机</b> — 告诉我你想用哪座哪楼，我帮你找空闲机器<br>🔍 <b>查询状态</b> — 实时查看各楼层洗衣机占用情况<br>⏰ <b>查询剩余时间</b> — 查看你正在使用的机器还有多久<br>📝 <b>查询预约记录</b> — 查看你的历史预约情况',
+    aiReplyBook:'好的！帮你跳转到预约页面，请选择日期、楼座和楼层。',
+    aiReplyStatus:'帮你跳转到首页，可以在那里按楼座和楼层筛选查看所有洗衣机状态。',
+    aiReplyTime:'你现在正在使用 <b>{id}</b>，剩余时间大约 <b>{min} 分钟</b>。',
+    aiReplyNoUsing:'你目前没有正在使用的设备，要现在去预约一台吗？',
+    aiReplyRecords:'你最近共有 <b>{n} 条</b>预约记录，帮你跳转到「我的」页面查看详情。',
+    aiReplyDefault:'我还在学习中！你可以试试上面的快捷指令，或者告诉我你想预约哪座哪楼的洗衣机。',
+    aiVoiceInput:'帮我预约洗衣机',
+    aiVoiceReply:'好的，我来帮你预约洗衣机！请告诉我你想用哪座哪楼，或者直接点击下方「预约洗衣」快捷指令。',
+    voiceRecording:'录音中…',voiceRecognizing:'识别中…',
+    voiceTip:'可以告诉我你的需求，我可以帮你预约洗衣机、发布取衣服务等',
+    voiceSpeech:'可以告诉我你的需求，我可以帮你预约洗衣机、发布取衣服务等',
+    deliveryTitle:'🛵 取送服务',
+    tabRequest:'帮我取',tabAccept:'我要帮取',
+    requestDesc:'发布取衣服务，让同学帮你把洗好的衣服送到宿舍',
+    pickupLoc:'取衣地点',deliveryLoc:'送达地点',serviceFee:'服务费用',
+    remarkLabel:'备注（可选）',remarkPh:'如：衣服在3号机，蓝色袋子',
+    postOrder:'发布订单',
+    confirmOrderTitle:'确认发布订单',confirmOrderSub:'请确认以下取送信息',
+    mPickup:'取衣地点',mDest:'送达地点',mFee:'服务费用',mMachine:'机器编号',
+    toastPosted:'🎉 发布成功！等待同学接单',
+    orderPending:'待接单',orderAccepted:'已接单',orderCompleted:'已完成',
+    acceptBtn:'接单',confirmReceiptBtn:'确认收货',
+    faceVerifyTitle:'身份验证',faceVerifySub:'接单前需进行人脸识别验证',
+    faceVerifying:'正在识别身份，请保持正面对准摄像头',
+    faceSuccess:'✅ 验证成功！身份确认为 {sid}',
+    toastAccepted:'✅ 接单成功！',
+    qrLabel:'{building} 门禁二维码',
+    enlargeBtn:'点击放大',closeBtn:'关闭',
+    completedMsg:'✅ 已完成 · 费用已到账 +{fee} MOP',
+    toastCompleted:'✅ 已确认收货，感谢使用！',
+    emptyOrders:'暂无待接订单\n发布取衣服务后，订单将在此显示',
+    emptyMyOrders:'暂无记录',
+    pickupBldPh:'请选择楼栋',pickupFloorPh:'请选择楼层',
+    pickupMachinePh:'机器编号（如W-A101）',
+    destTypeDry:'送去烘干',destTypeDorm:'送回宿舍',
+    destDryerNumPh:'烘干机编号或"任意烘干机"',
+    destBldPh:'楼栋',destRoomPlaceholder:'宿舍号，如 101',
+    fromLabel:'取衣',toLabel:'送达',
+    justNow:'刚刚',minsAgo:'{n}分钟前',
+    myPostedOrders:'我的下单记录',
+    mdTabPosted:'帮我取记录',mdTabAccepted:'送货记录',
+    anyDryer:'任意烘干机',
+    destDryLabel:'送至烘干机',destDormLabel:'送回宿舍',
+    accepterDryerLabel:'送达烘干机',
+  },
+  en:{
+    appName:'Campus Laundry',appSlogan:'Smart Booking · Anytime',
+    regTitle:'Bind Student ID',regDesc:'This system is for registered students only. Please fill in your real information.',
+    regSchoolLabel:'University',regSchoolPlaceholder:'Select your university',
+    schoolUM:'University of Macau',schoolMUST:'Macau University of Science and Technology',
+    regSchoolHint:'This system is currently only open to MUST students. Please select MUST.',
+    regNameLabel:'Full Name',regNamePh:'Enter your real name',
+    regIdLabel:'Student ID',regIdPh:'Enter your student ID',
+    regBtn:'Enter System',
+    greet:'Good morning 👋',notice:'Washer W-A301 (Bldg A, F3) under maintenance',
+    qBook:'Book Now',qMyBook:'My Bookings',qRepair:'Report',qStats:'Statistics',
+    washerStatus:'Washer Status',dryerStatus:'Dryer Status',
+    all:'All',allFloors:'All Floors',
+    floor1:'F1',floor2:'F2',floor3:'F3',floor4:'F4',floor5:'F5',
+    free:'Available',soon:'Almost Free',busy:'In Use',
+    bookTitle:'Book Washer / Dryer',
+    selectDate:'Select Date',selectLoc:'Select Location',
+    building:'Building',floor:'Floor',
+    currentLoc:'Selected: ',
+    availDevices:'Available Devices',selectSlotFirst:'Please select a time slot',
+    studentId:'ID: ',profTag:'CS Dept · Year 3',
+    totalUse:'Total Uses',monthBook:'This Month',noshow:'No-shows',
+    myRecords:'My Booking Records',viewAll:'All ›',
+    menuRepair:'Report Issue',menuFeedback:'Feedback',
+    menuHelp:'Help & FAQ',menuNotify:'Notifications',menuAccount:'Account',
+    menuMyDelivery:'My Deliveries',
+    logout:'Log Out',
+    tabHome:'Home',tabBook:'Book',tabMe:'Me',tabDelivery:'Delivery',
+    rulesTitle:'Terms of Use',rulesSub:'Please read the following rules carefully',
+    rule1Title:'Students Only',
+    rule1Desc:'This system requires a valid campus student ID. It is exclusively open to enrolled MUST students. Do not share your account with others.',
+    rule2Title:'Instant Completion Notification',
+    rule2Desc:'Once your laundry is done, the app will immediately push a "Laundry Complete" notification. Please collect your clothes promptly to avoid blocking the machine.',
+    rule3Title:'No-Show Warning',
+    rule3Desc:'If you book a machine but fail to use it within the scheduled time (No-show), the system will send a warning and mark that booking as a violation.',
+    rule4Title:'Account Suspension for Repeat No-Shows',
+    rule4Desc:'After 3 cumulative no-shows, your account will be suspended and require admin review to reactivate. Please respect other students\' access to laundry facilities.',
+    rulesAgree:'I Understand, Get Started',
+    confirmTitle:'Confirm Booking',confirmSub:'Please review your booking details before confirming',
+    mDevice:'Device',mLoc:'Location',mDate:'Date',mTime:'Time Slot',mDur:'Est. Duration',
+    cancel:'Cancel',confirmBook:'Confirm',
+    toastRepair:'Repair feature coming soon',toastStats:'Statistics coming soon',
+    toastFeedback:'Thank you for your feedback!',toastHelp:'Help center coming soon',
+    toastNotify:'Notification settings coming soon',toastAccount:'Account settings coming soon',
+    toastLogout:'Logged out',toastBooked:'🎉 Booking confirmed!',
+    washerLabel:'Washer',dryerLabel:'Dryer',
+    washerSpec:'Drum·10kg·~45min/cycle',dryerSpec:'Heat Pump·8kg·~60min/cycle',
+    statusFree:'Available',statusBusy:'In Use',statusSoon:'Almost Free',
+    noDevice:'No devices match your filter',
+    usingWasher:'Washer',usingDryer:'Dryer',
+    remaining:'Remaining',minutes:'min',estFinish:'Est.',
+    noUsing:'No device in use\nTap "Book Now" to make a reservation',
+    locRoom:' Laundry Room',locBuilding:'Bldg ',locFloor:'F',
+    recOngoing:'Ongoing',recDone:'Done',recCancelled:'Cancelled',
+    today:'Today',tomorrow:'Tomorrow',
+    weekdays:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    weekPrefix:'',aboutDur:'~',bookConfirmBtn:'Confirm · ',at:' @ ',
+    durWasher:'~45 min',durDryer:'~60 min',
+    greetMorning:'Good morning 👋',greetAfternoon:'Good afternoon 👋',greetEvening:'Good evening 👋',
+    studentSuffix:'',
+    regErrSchool:'Please select MUST',regErrName:'Please enter your name',regErrId:'Please enter your student ID',
+    regErrSchoolWrong:'This system is only open to MUST students',
+    tabAI:'AI',
+    aiName:'WashBot Assistant',aiOnline:'Online · Here to help',
+    aiQuickTitle:'Quick Commands',
+    aiQBook:'📅 Book Laundry',aiQStatus:'🔍 Machine Status',aiQTime:'⏰ Time Left',aiQRecords:'📝 My Bookings',
+    aiInputPh:'Type a command or question…',
+    aiGreeting:'👋 Hi! I\'m <b>WashBot</b>, your smart laundry assistant. I can help you:<br><br>📅 <b>Book a machine</b> — Tell me which building & floor, I\'ll find a free one<br>🔍 <b>Check status</b> — Real-time availability across all floors<br>⏰ <b>Time remaining</b> — See how long until your laundry is done<br>📝 <b>View bookings</b> — Browse your booking history',
+    aiReplyBook:'Sure! Taking you to the booking page. Please select a date, building and floor.',
+    aiReplyStatus:'Taking you to the home page where you can filter machines by building and floor.',
+    aiReplyTime:'You are currently using <b>{id}</b> with about <b>{min} min</b> remaining.',
+    aiReplyNoUsing:'You have no active laundry session. Would you like to book one now?',
+    aiReplyRecords:'You have <b>{n}</b> booking record(s). Taking you to the "Me" page for details.',
+    aiReplyDefault:'Still learning! Try the quick commands above, or tell me which building & floor you want to book.',
+    aiVoiceInput:'Book a washer for me',
+    aiVoiceReply:'Sure! I\'ll help you book a washer. Please tell me which building and floor, or tap the "Book Laundry" quick command below.',
+    voiceRecording:'Recording…',voiceRecognizing:'Recognizing…',
+    voiceTip:'Please tell me your request. I can help you book a washer or post a laundry pickup order.',
+    voiceSpeech:'Please tell me your request. I can help you book a washer or post a laundry pickup order.',
+    deliveryTitle:'🛵 Delivery Service',
+    tabRequest:'Request Pickup',tabAccept:'Accept Orders',
+    requestDesc:'Post a pickup request and let a fellow student deliver your laundry to your dorm.',
+    pickupLoc:'Pickup Location',deliveryLoc:'Delivery Location',serviceFee:'Service Fee',
+    remarkLabel:'Remarks (Optional)',remarkPh:'e.g. Clothes in machine 3, blue bag',
+    postOrder:'Post Order',
+    confirmOrderTitle:'Confirm Order',confirmOrderSub:'Please review your delivery details',
+    mPickup:'Pickup',mDest:'Deliver to',mFee:'Fee',mMachine:'Machine No.',
+    toastPosted:'🎉 Posted! Waiting for someone to accept',
+    orderPending:'Pending',orderAccepted:'Accepted',orderCompleted:'Completed',
+    acceptBtn:'Accept',confirmReceiptBtn:'Confirm Receipt',
+    faceVerifyTitle:'Identity Verification',faceVerifySub:'Face recognition required before accepting',
+    faceVerifying:'Identifying... Please face the camera directly',
+    faceSuccess:'✅ Verified! Identity confirmed: {sid}',
+    toastAccepted:'✅ Order accepted!',
+    qrLabel:'{building} Access QR Code',
+    enlargeBtn:'Enlarge',closeBtn:'Close',
+    completedMsg:'✅ Completed · Payment Received +{fee} MOP',
+    toastCompleted:'✅ Receipt confirmed, thank you!',
+    emptyOrders:'No pending orders\nOrders will appear here once posted',
+    emptyMyOrders:'No records yet',
+    pickupBldPh:'Select Building',pickupFloorPh:'Select Floor',
+    pickupMachinePh:'Machine No. (e.g. W-A101)',
+    destTypeDry:'Send to Dryer',destTypeDorm:'Back to Dorm',
+    destDryerNumPh:'Dryer No. or "Any Dryer"',
+    destBldPh:'Building',destRoomPlaceholder:'Room No., e.g. 101',
+    fromLabel:'From',toLabel:'To',
+    justNow:'Just now',minsAgo:'{n} min ago',
+    myPostedOrders:'My Posted Orders',
+    mdTabPosted:'Request Pickup',mdTabAccepted:'Delivery Records',
+    anyDryer:'Any Dryer',
+    destDryLabel:'To Dryer',destDormLabel:'Back to Dorm',
+    accepterDryerLabel:'Delivered to Dryer',
+  }
+};
+
+let lang='zh';
+function T(k){return(I18N[lang]&&I18N[lang][k]!==undefined)?I18N[lang][k]:(I18N.zh[k]||k);}
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(I18N[lang][k]!==undefined) el.textContent=I18N[lang][k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    const k=el.getAttribute('data-i18n-ph');
+    if(I18N[lang][k]!==undefined) el.placeholder=I18N[lang][k];
+  });
+  // 注册页学校下拉
+  const sel=document.getElementById('reg-school');
+  if(sel){sel.options[0].textContent=T('regSchoolPlaceholder');sel.options[1].textContent=T('schoolUM');sel.options[2].textContent=T('schoolMUST');}
+  // 语言按钮（首页+注册页）
+  const lb=document.getElementById('lang-btn');if(lb) lb.textContent=lang==='zh'?'EN':'中文';
+  const rlb=document.getElementById('reg-lang-btn');if(rlb) rlb.textContent=lang==='zh'?'EN':'中文';
+  // AI输入框
+  const aiInput=document.getElementById('ai-input');
+  if(aiInput) aiInput.placeholder=T('aiInputPh');
+  // 语音提示
+  const vst=document.getElementById('voice-status-text');if(vst) vst.textContent=T('voiceRecording');
+  const vtt=document.getElementById('voice-tip-text');if(vtt) vtt.textContent=T('voiceTip');
+  // 取衣楼栋下拉
+  const pbld=document.getElementById('pickup-building');
+  if(pbld) pbld.options[0].textContent=T('pickupBldPh');
+  // 取衣楼层下拉
+  const pfl=document.getElementById('pickup-floor');
+  if(pfl) pfl.options[0].textContent=T('pickupFloorPh');
+  // 送达地点类型按钮
+  const dtd=document.getElementById('dest-type-dry');if(dtd) dtd.textContent=T('destTypeDry');
+  const dtdm=document.getElementById('dest-type-dorm');if(dtdm) dtdm.textContent=T('destTypeDorm');
+  // 宿舍楼栋下拉
+  const dbld=document.getElementById('dest-building');
+  if(dbld) dbld.options[0].textContent=T('destBldPh');
+  // 重新渲染
+  initDates();renderUsing();renderWashers();renderDryers();renderBookDevices();renderProfile();updateLocHint();updateGreet();renderOrderList();renderMyPostedList();
+  // 如果我的帮取页面打开，也刷新
+  if(document.getElementById('page-mydelivery').classList.contains('show')) renderMyDeliveryPage();
+}
+function toggleLang(){lang=lang==='zh'?'en':'zh';applyI18n();}
+
+// ══════════════════════════════════════════════════
+// 数据层
+// ══════════════════════════════════════════════════
+const BUILDINGS=['A','B','C','D','P'];
+const FLOORS=[1,2,3,4,5];
+const HOURS=['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+
+function sRand(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
+
+const DB={};
+BUILDINGS.forEach(b=>{
+  DB[b]={};
+  FLOORS.forEach(f=>{
+    const r=sRand(b.charCodeAt(0)*100+f*13);
+    const pool=['free','free','free','busy','soon'];
+    const mkSlots=seed2=>{const r2=sRand(seed2);return HOURS.map(()=>r2()<0.3?'taken':'avail');};
+    DB[b][f]={
+      washers:[
+        {id:`W-${b}${f}01`,type:'washer',icon:'🫧',slots:mkSlots(b.charCodeAt(0)*1000+f*100+1),status:pool[Math.floor(r()*5)]},
+        {id:`W-${b}${f}02`,type:'washer',icon:'🫧',slots:mkSlots(b.charCodeAt(0)*1000+f*100+2),status:pool[Math.floor(r()*5)]},
+      ],
+      dryers:[{id:`D-${b}${f}01`,type:'dryer',icon:'🌀',slots:mkSlots(b.charCodeAt(0)*1000+f*100+3),status:pool[Math.floor(r()*5)]}]
+    };
+    [...DB[b][f].washers,...DB[b][f].dryers].forEach(d=>{if(d.status==='busy'){d.slots[1]='taken';d.slots[2]='taken';}});
+  });
+});
+
+let currentUsing={id:'W-P503',b:'P',f:5,type:'washer',remaining:18,total:45};
+let userInfo={name:'李明',sid:'2021010234'};
+let records=[
+  {icon:'🫧',dc:'',id:'W-P503',type:'washer',b:'P',f:5,date:'today',slot:'09:00',st:'ongoing'},
+  {icon:'🌀',dc:'dryer',id:'D-B302',type:'dryer',b:'B',f:3,date:'04/26',slot:'14:00',st:'done'},
+  {icon:'🫧',dc:'',id:'W-C201',type:'washer',b:'C',f:2,date:'04/24',slot:'10:00',st:'done'},
+  {icon:'🫧',dc:'',id:'W-A103',type:'washer',b:'A',f:1,date:'04/20',slot:'08:00',st:'cancelled'},
+];
+let bState={building:'A',floor:'1',date:'',dateStr:'',dev:null,slotIdx:null};
+let hWB='all',hWF='all',hDB='all',hDF='all';
+
+// ══════════════════════════════════════════════════
+// 取送服务数据
+// ══════════════════════════════════════════════════
+// isMyOrder=true: 我发布的（帮我取）; acceptedByMe=true: 我接的（送货）
+let deliveryOrders=[
+  {id:'order_001',
+   pickup:'P座5楼洗衣房',pickupEn:'Bldg P F5 Laundry Room',
+   machineNum:'W-P501',
+   destType:'dorm',
+   dest:'A1栋 301室',destEn:'A1 Bldg, Room 301',
+   fee:5,status:'pending',postedAt:Date.now()-5*60*1000,
+   isMyOrder:false,acceptedByMe:false,
+   qrBuilding:'A1栋',qrBuildingEn:'A1 Bldg'},
+  {id:'order_002',
+   pickup:'B座3楼洗衣房',pickupEn:'Bldg B F3 Laundry Room',
+   machineNum:'W-B301',
+   destType:'dry',
+   dest:'任意烘干机',destEn:'Any Dryer',
+   fee:3,status:'pending',postedAt:Date.now()-12*60*1000,
+   isMyOrder:false,acceptedByMe:false,
+   qrBuilding:'B座',qrBuildingEn:'Bldg B'},
+];
+let selectedFee=3;
+let selectedDestType='dry'; // 'dry' or 'dorm'
+let pendingAcceptOrderId=null;
+let faceProgressTimer=null;
+let currentQRBuilding='';
+
+// ══════════════════════════════════════════════════
+// 取衣地点二级菜单
+// ══════════════════════════════════════════════════
+function onPickupBuildingChange(){
+  const bld=document.getElementById('pickup-building').value;
+  const flSel=document.getElementById('pickup-floor');
+  flSel.innerHTML=`<option value="">${T('pickupFloorPh')}</option>`;
+  if(bld){
+    FLOORS.forEach(f=>{
+      const opt=document.createElement('option');
+      opt.value=String(f);
+      opt.textContent=lang==='zh'?`${f}楼`:`F${f}`;
+      flSel.appendChild(opt);
+    });
+    flSel.disabled=false;
+  } else {
+    flSel.disabled=true;
+  }
+}
+function onPickupFloorChange(){
+  // 可在此联动机器编号提示，暂留空
+}
+
+// ══════════════════════════════════════════════════
+// 送达地点类型切换
+// ══════════════════════════════════════════════════
+function selDestType(type){
+  selectedDestType=type;
+  document.getElementById('dest-type-dry').classList.toggle('active',type==='dry');
+  document.getElementById('dest-type-dorm').classList.toggle('active',type==='dorm');
+  document.getElementById('dest-dry-area').style.display=type==='dry'?'flex':'none';
+  document.getElementById('dest-dorm-area').style.display=type==='dorm'?'flex':'none';
+}
+
+function selFee(el){
+  document.querySelectorAll('.fee-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  selectedFee=parseInt(el.dataset.fee);
+}
+
+// ══════════════════════════════════════════════════
+// 注册
+// ══════════════════════════════════════════════════
+function onSchoolChange(){
+  const v=document.getElementById('reg-school').value;
+  document.getElementById('school-hint').style.display=(v==='um')?'flex':'none';
+}
+function doRegister(){
+  const school=document.getElementById('reg-school').value;
+  const name=document.getElementById('reg-name').value.trim();
+  const sid=document.getElementById('reg-id').value.trim();
+  if(!school){showToast(T('regErrSchool'));return;}
+  if(school!=='must'){showToast(T('regErrSchoolWrong'));return;}
+  if(!name){showToast(T('regErrName'));return;}
+  if(!sid){showToast(T('regErrId'));return;}
+  userInfo={name,sid};
+  document.getElementById('prof-name').textContent=name;
+  document.getElementById('prof-id-num').textContent=sid;
+  document.getElementById('banner-name').textContent=name+T('studentSuffix');
+  document.getElementById('page-register').style.display='none';
+  document.getElementById('rules-mask').classList.add('show');
+}
+function closeRules(){document.getElementById('rules-mask').classList.remove('show');}
+
+// ══════════════════════════════════════════════════
+// Tab 切换
+// ══════════════════════════════════════════════════
+function switchTab(name){
+  ['home','booking','delivery','profile'].forEach(n=>{
+    const page=document.getElementById('page-'+n);
+    const tab=document.getElementById('tab-'+n);
+    if(page) page.classList.toggle('active',n===name);
+    if(tab) tab.classList.toggle('active',n===name);
+  });
+  if(name==='home'){renderUsing();renderWashers();renderDryers();}
+  if(name==='profile') renderProfile();
+  if(name==='delivery'){renderOrderList();renderMyPostedList();}
+  if(aiOpen) toggleAI();
+}
+function switchDTab(name){
+  document.getElementById('dtab-request').classList.toggle('active',name==='request');
+  document.getElementById('dtab-accept').classList.toggle('active',name==='accept');
+  document.getElementById('dsub-request').style.display=name==='request'?'block':'none';
+  document.getElementById('dsub-accept').style.display=name==='accept'?'block':'none';
+  if(name==='accept') renderOrderList();
+  if(name==='request') renderMyPostedList();
+}
+
+// ══════════════════════════════════════════════════
+// 我的帮取子页
+// ══════════════════════════════════════════════════
+function openMyDelivery(){
+  const pg=document.getElementById('page-mydelivery');
+  pg.classList.add('show');
+  renderMyDeliveryPage();
+}
+function closeMyDelivery(){
+  document.getElementById('page-mydelivery').classList.remove('show');
+}
+function switchMDTab(name){
+  document.getElementById('mdtab-posted').classList.toggle('active',name==='posted');
+  document.getElementById('mdtab-accepted').classList.toggle('active',name==='accepted');
+  document.getElementById('mdsub-posted').style.display=name==='posted'?'block':'none';
+  document.getElementById('mdsub-accepted').style.display=name==='accepted'?'block':'none';
+  renderMyDeliveryPage();
+}
+function renderMyDeliveryPage(){
+  renderMDPosted();
+  renderMDAccepted();
+}
+function renderMDPosted(){
+  const el=document.getElementById('md-posted-list');if(!el)return;
+  const myOrders=deliveryOrders.filter(o=>o.isMyOrder);
+  if(!myOrders.length){el.innerHTML=`<div class="empty-orders">${T('emptyMyOrders')}</div>`;return;}
+  // 传 context='mdposted' 确保确认收货按钮和完成状态正确显示
+  el.innerHTML=myOrders.map(order=>renderOrderCard(order,true,false,'mdposted')).join('');
+  // 已接单/已完成的订单不需要二维码（下单人视角）
+}
+function renderMDAccepted(){
+  const el=document.getElementById('md-accepted-list');if(!el)return;
+  const myAccepted=deliveryOrders.filter(o=>o.acceptedByMe);
+  if(!myAccepted.length){el.innerHTML=`<div class="empty-orders">${T('emptyMyOrders')}</div>`;return;}
+  // 传 context='mdaccepted' 确保接单人视角显示二维码和到账提示
+  el.innerHTML=myAccepted.map(order=>renderOrderCard(order,false,true,'mdaccepted')).join('');
+  myAccepted.forEach(o=>{
+    if(o.status==='accepted'||o.status==='completed') setTimeout(()=>drawQR('qr-mdacc-'+o.id,100),50);
+  });
+}
+
+// ══════════════════════════════════════════════════
+// 首页
+// ══════════════════════════════════════════════════
+function updateGreet(){
+  const h=new Date().getHours();
+  const key=h<12?'greetMorning':h<18?'greetAfternoon':'greetEvening';
+  const el=document.getElementById('banner-greet');
+  if(el) el.textContent=T(key);
+}
+function renderUsing(){
+  const el=document.getElementById('home-using-card');
+  if(!el) return;
+  if(currentUsing){
+    const pct=Math.round((1-currentUsing.remaining/currentUsing.total)*100);
+    const now=new Date();now.setMinutes(now.getMinutes()+currentUsing.remaining);
+    const eta=now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+    const devLabel=currentUsing.type==='washer'?T('usingWasher'):T('usingDryer');
+    const locS=lang==='zh'?`${currentUsing.b}${T('locBuilding')} ${currentUsing.f}${T('locFloor')}${T('locRoom')}`:`${T('locBuilding')}${currentUsing.b}, ${T('locFloor')}${currentUsing.f}${T('locRoom')}`;
+    el.innerHTML=`<div class="using-card"><div class="using-icon">${currentUsing.type==='washer'?'🫧':'🌀'}</div><div class="using-info"><div class="using-id">${devLabel} ${currentUsing.id}</div><div class="using-loc">📍 ${locS}</div><div class="using-time-row"><span class="time-badge">${T('remaining')} ${currentUsing.remaining} ${T('minutes')}</span><span class="time-eta">${T('estFinish')} ${eta}</span></div><div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div></div></div>`;
+  } else {
+    el.innerHTML=`<div class="no-using">${T('noUsing').replace('\n','<br>')}</div>`;
+  }
+}
+function hFilter(el,type){
+  const id=type==='b'?'hb-filter':'hf-filter';
+  document.querySelectorAll('#'+id+' .loc-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  if(type==='b') hWB=el.dataset.b; else hWF=el.dataset.f;
+  renderWashers();
+}
+function hDFilter(el,type){
+  const id=type==='b'?'hdb-filter':'hdf-filter';
+  document.querySelectorAll('#'+id+' .loc-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  if(type==='b') hDB=el.dataset.db; else hDF=el.dataset.df;
+  renderDryers();
+}
+function locStr(b,f){return lang==='zh'?`${b}${T('locBuilding')} ${f}${T('locFloor')}`:`${T('locBuilding')}${b} ${T('locFloor')}${f}`;}
+function renderWashers(){
+  const list=[];
+  BUILDINGS.forEach(b=>{if(hWB!=='all'&&hWB!==b)return;FLOORS.forEach(f=>{if(hWF!=='all'&&hWF!==String(f))return;DB[b][f].washers.forEach(d=>list.push({...d,b,f}));});});
+  const el=document.getElementById('home-washer-list');if(!el)return;
+  el.innerHTML=list.length?list.map(d=>`<div class="dev-chip"><span class="di">${d.icon}</span><div class="dinfo"><div class="did">${d.id}</div><div class="dloc">${locStr(d.b,d.f)}</div></div><div class="dot ${d.status}"></div></div>`).join(''):`<div style="grid-column:1/-1;text-align:center;color:#bbb;padding:16px;font-size:13px">${T('noDevice')}</div>`;
+}
+function renderDryers(){
+  const list=[];
+  BUILDINGS.forEach(b=>{if(hDB!=='all'&&hDB!==b)return;FLOORS.forEach(f=>{if(hDF!=='all'&&hDF!==String(f))return;DB[b][f].dryers.forEach(d=>list.push({...d,b,f}));});});
+  const el=document.getElementById('home-dryer-list');if(!el)return;
+  el.innerHTML=list.length?list.map(d=>`<div class="dev-chip"><span class="di">${d.icon}</span><div class="dinfo"><div class="did">${d.id}</div><div class="dloc">${locStr(d.b,d.f)}</div></div><div class="dot ${d.status}"></div></div>`).join(''):`<div style="grid-column:1/-1;text-align:center;color:#bbb;padding:16px;font-size:13px">${T('noDevice')}</div>`;
+}
+
+// ══════════════════════════════════════════════════
+// 预约页
+// ══════════════════════════════════════════════════
+function initDates(){
+  const days=T('weekdays'),months=T('months'),prefix=T('weekPrefix');
+  let html='';
+  for(let i=0;i<7;i++){
+    const d=new Date();d.setDate(d.getDate()+i);
+    const lbl=i===0?T('today'):i===1?T('tomorrow'):prefix+days[d.getDay()];
+    const mo=(d.getMonth()+1<10?'0':'')+(d.getMonth()+1);
+    const da=(d.getDate()<10?'0':'')+d.getDate();
+    html+=`<div class="date-chip${i===0?' active':''}" onclick="selDate(this,'${lbl} ${mo}/${da}')"><span class="dw">${lbl}</span><span class="dd">${d.getDate()}</span><span class="dm">${months[d.getMonth()]}</span></div>`;
+  }
+  const sc=document.getElementById('date-scroll');if(sc) sc.innerHTML=html;
+  const now=new Date();
+  const mo=(now.getMonth()+1<10?'0':'')+(now.getMonth()+1);
+  const da=(now.getDate()<10?'0':'')+now.getDate();
+  bState.date=`${T('today')} ${mo}/${da}`;bState.dateStr=`${mo}/${da}`;
+}
+function selDate(el,val){
+  document.querySelectorAll('.date-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');bState.date=val;resetSel();renderBookDevices();
+}
+function bookSel(el,type){
+  const gid=type==='building'?'book-building':'book-floor';
+  document.querySelectorAll('#'+gid+' .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');bState[type]=el.dataset.val;updateLocHint();resetSel();renderBookDevices();
+}
+function updateLocHint(){
+  const hint=document.getElementById('loc-hint-text');if(!hint)return;
+  hint.textContent=lang==='zh'?`${bState.building}座 ${bState.floor}楼洗衣房`:`Bldg ${bState.building}, Floor ${bState.floor} Laundry Room`;
+}
+function resetSel(){
+  bState.dev=null;bState.slotIdx=null;
+  const btn=document.getElementById('book-btn');
+  if(btn){btn.disabled=true;btn.textContent=T('selectSlotFirst');}
+}
+function renderBookDevices(){
+  const b=bState.building,f=parseInt(bState.floor);
+  const devs=[...DB[b][f].washers,...DB[b][f].dryers];
+  const stMap={free:T('statusFree'),busy:T('statusBusy'),soon:T('statusSoon')};
+  const el=document.getElementById('book-device-list');if(!el)return;
+  el.innerHTML=devs.map((dev,di)=>{
+    const label=dev.type==='washer'?T('washerLabel'):T('dryerLabel');
+    const spec=dev.type==='washer'?T('washerSpec'):T('dryerSpec');
+    return `<div class="book-card" id="bc-${di}"><div class="bc-top"><div class="bc-left"><div class="bc-icon${dev.type==='dryer'?' dryer':''}">${dev.icon}</div><div><div class="bc-name">${dev.id}<span class="bc-tag ${dev.type==='washer'?'w':'d'}">${label}</span></div><div class="bc-type">${spec}</div></div></div><div class="status-badge ${dev.status}">${stMap[dev.status]}</div></div><div class="time-slots">${dev.slots.map((s,si)=>`<div class="ts ${s==='taken'?'taken':'avail'}" onclick="selSlot(this,${di},${si})">${HOURS[si]}</div>`).join('')}</div></div>`;
+  }).join('');
+}
+function selSlot(el,di,si){
+  if(el.classList.contains('taken'))return;
+  document.querySelectorAll('.ts.sel').forEach(t=>{t.classList.remove('sel');t.classList.add('avail');});
+  document.querySelectorAll('.book-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.remove('avail');el.classList.add('sel');
+  document.getElementById('bc-'+di).classList.add('selected');
+  const b=bState.building,f=parseInt(bState.floor);
+  const devs=[...DB[b][f].washers,...DB[b][f].dryers];
+  bState.dev=devs[di];bState.slotIdx=si;
+  const btn=document.getElementById('book-btn');
+  btn.disabled=false;btn.textContent=T('bookConfirmBtn')+devs[di].id+T('at')+HOURS[si];
+}
+
+// ══════════════════════════════════════════════════
+// 预约弹窗
+// ══════════════════════════════════════════════════
+function openModal(){
+  if(!bState.dev)return;
+  const dev=bState.dev,si=bState.slotIdx;
+  const label=dev.type==='washer'?T('washerLabel'):T('dryerLabel');
+  const locText=lang==='zh'?`${bState.building}座 ${bState.floor}楼洗衣房`:`Bldg ${bState.building}, Floor ${bState.floor} Laundry Room`;
+  document.getElementById('m-device').textContent=`${dev.id}（${label}）`;
+  document.getElementById('m-loc').textContent=locText;
+  document.getElementById('m-date').textContent=bState.date;
+  const endH=parseInt(HOURS[si])+1;
+  document.getElementById('m-time').textContent=`${HOURS[si]} – ${endH<10?'0':''}${endH}:00`;
+  document.getElementById('m-dur').textContent=dev.type==='washer'?T('durWasher'):T('durDryer');
+  document.getElementById('modal-mask').classList.add('show');
+}
+function closeModal(){document.getElementById('modal-mask').classList.remove('show');}
+function maskClick(e){if(e.target===document.getElementById('modal-mask'))closeModal();}
+function confirmBook(){
+  const dev=bState.dev,si=bState.slotIdx,b=bState.building,f=parseInt(bState.floor);
+  const allDevs=[...DB[b][f].washers,...DB[b][f].dryers];
+  allDevs.forEach(d=>{if(d.id===dev.id)d.slots[si]='taken';});
+  currentUsing={id:dev.id,b,f,type:dev.type,remaining:dev.type==='washer'?45:60,total:dev.type==='washer'?45:60};
+  records.unshift({icon:dev.icon,dc:dev.type==='dryer'?'dryer':'',id:dev.id,type:dev.type,b,f,date:bState.dateStr||bState.date,slot:HOURS[si],st:'ongoing'});
+  closeModal();showToast(T('toastBooked'));resetSel();renderBookDevices();
+  setTimeout(()=>switchTab('home'),1200);
+}
+
+// ══════════════════════════════════════════════════
+// 我的页
+// ══════════════════════════════════════════════════
+function renderProfile(){
+  const totalEl=document.getElementById('stat-total'),monthEl=document.getElementById('stat-month'),noshowEl=document.getElementById('stat-noshow');
+  if(totalEl) totalEl.textContent=28+records.filter(r=>r.st==='done').length;
+  if(monthEl) monthEl.textContent=records.filter(r=>r.st!=='cancelled').length;
+  if(noshowEl) noshowEl.textContent=0;
+  const el=document.getElementById('profile-records');if(!el)return;
+  const stLabel={ongoing:T('recOngoing'),done:T('recDone'),cancelled:T('recCancelled')};
+  const devLabel=r=>r.type==='washer'?T('washerLabel'):T('dryerLabel');
+  const recLocStr=r=>lang==='zh'?`${r.b}座 ${r.f}楼 · ${r.date} ${r.slot}`:`Bldg ${r.b} F${r.f} · ${r.date} ${r.slot}`;
+  el.innerHTML=records.slice(0,5).map(r=>`<div class="rec-item"><div class="rec-icon ${r.dc}">${r.icon}</div><div class="rec-info"><div class="rec-name">${r.id} · ${devLabel(r)}</div><div class="rec-detail">${recLocStr(r)}</div></div><div class="rec-status ${r.st}">${stLabel[r.st]}</div></div>`).join('');
+  document.getElementById('prof-name').textContent=userInfo.name;
+  document.getElementById('prof-id-num').textContent=userInfo.sid;
+  document.getElementById('banner-name').textContent=userInfo.name+T('studentSuffix');
+}
+function doLogout(){
+  showToast(T('toastLogout'));
+  setTimeout(()=>{
+    document.getElementById('page-register').style.display='flex';
+    document.getElementById('reg-school').value='';
+    document.getElementById('reg-name').value='';
+    document.getElementById('reg-id').value='';
+    document.getElementById('school-hint').style.display='none';
+  },1500);
+}
+
+// ══════════════════════════════════════════════════
+// Toast
+// ══════════════════════════════════════════════════
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ══════════════════════════════════════════════════
+// AI 助手
+// ══════════════════════════════════════════════════
+let aiOpen=false;
+function initAI(){
+  const el=document.getElementById('ai-greeting');
+  if(el) el.innerHTML=T('aiGreeting');
+}
+function toggleAI(){
+  const panel=document.getElementById('ai-panel');
+  aiOpen=!aiOpen;
+  panel.classList.toggle('show',aiOpen);
+  if(aiOpen){
+    const el=document.getElementById('ai-greeting');
+    if(el) el.innerHTML=T('aiGreeting');
+    setTimeout(()=>{const inp=document.getElementById('ai-input');if(inp)inp.focus();},200);
+  }
+}
+function aiAddBubble(html,isUser=false){
+  const chat=document.getElementById('ai-chat');
+  const div=document.createElement('div');
+  div.className=isUser?'ai-bubble-user':'ai-bubble';
+  div.innerHTML=html;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+}
+function aiQuick(type){
+  const labels={book:T('aiQBook'),status:T('aiQStatus'),time:T('aiQTime'),records:T('aiQRecords')};
+  aiAddBubble(labels[type],true);
+  setTimeout(()=>{
+    if(type==='book'){aiAddBubble(T('aiReplyBook'));setTimeout(()=>{toggleAI();switchTab('booking');},1000);}
+    else if(type==='status'){aiAddBubble(T('aiReplyStatus'));setTimeout(()=>{toggleAI();switchTab('home');},1000);}
+    else if(type==='time'){
+      if(currentUsing){aiAddBubble(T('aiReplyTime').replace('{id}',currentUsing.id).replace('{min}',currentUsing.remaining));}
+      else aiAddBubble(T('aiReplyNoUsing'));
+    } else if(type==='records'){
+      aiAddBubble(T('aiReplyRecords').replace('{n}',records.length));
+      setTimeout(()=>{toggleAI();switchTab('profile');},1000);
+    }
+  },400);
+}
+function aiSend(){
+  const input=document.getElementById('ai-input');
+  const text=input.value.trim();if(!text)return;
+  aiAddBubble(text,true);input.value='';
+  setTimeout(()=>{
+    const t=text.toLowerCase();
+    if(t.includes('预约')||t.includes('book')||t.includes('reserve')){aiQuick('book');return;}
+    if(t.includes('状态')||t.includes('空闲')||t.includes('status')||t.includes('available')){aiQuick('status');return;}
+    if(t.includes('剩余')||t.includes('时间')||t.includes('time')||t.includes('remaining')){aiQuick('time');return;}
+    if(t.includes('记录')||t.includes('历史')||t.includes('record')||t.includes('history')){aiQuick('records');return;}
+    if(t.includes('取送')||t.includes('取衣')||t.includes('delivery')||t.includes('pickup')){
+      aiAddBubble(lang==='zh'?'好的！帮你跳转到取送服务页面，你可以发布取衣订单或接单帮同学取衣。':'Sure! Taking you to the Delivery page where you can post or accept pickup orders.');
+      setTimeout(()=>{toggleAI();switchTab('delivery');},1000);return;
+    }
+    aiAddBubble(T('aiReplyDefault'));
+  },500);
+}
+
+// 点击面板外关闭 AI
+document.addEventListener('click',e=>{
+  if(aiOpen&&!document.getElementById('ai-panel').contains(e.target)&&!document.getElementById('tab-ai').contains(e.target)){
+    toggleAI();
+  }
+});
+
+// ══════════════════════════════════════════════════
+// AI 语音输入
+// ══════════════════════════════════════════════════
+let voiceTimer=null;
+function startVoiceInput(){
+  if(voiceTimer) return;
+  if(window.speechSynthesis){
+    try{
+      const utter=new SpeechSynthesisUtterance(T('voiceSpeech'));
+      utter.lang=lang==='zh'?'zh-CN':'en-US';
+      utter.rate=0.95;utter.volume=1;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    }catch(e){}
+  }
+  const overlay=document.getElementById('voice-overlay');
+  const micBtn=document.getElementById('ai-mic-btn');
+  const statusText=document.getElementById('voice-status-text');
+  overlay.classList.add('show');
+  micBtn.classList.add('recording');
+  statusText.textContent=T('voiceRecording');
+  voiceTimer=setTimeout(()=>{
+    statusText.textContent=T('voiceRecognizing');
+    setTimeout(()=>{
+      overlay.classList.remove('show');
+      micBtn.classList.remove('recording');
+      voiceTimer=null;
+      const voiceText=T('aiVoiceInput');
+      aiAddBubble(voiceText,true);
+      setTimeout(()=>{aiAddBubble(T('aiVoiceReply'));},500);
+    },1200);
+  },1500);
+}
+
+// ══════════════════════════════════════════════════
+// 取送服务
+// ══════════════════════════════════════════════════
+function getTimeAgo(ts){
+  const diff=Math.floor((Date.now()-ts)/1000/60);
+  if(diff<1) return T('justNow');
+  return T('minsAgo').replace('{n}',diff);
+}
+
+// 构建订单显示文本
+function getOrderPickupText(order){
+  return lang==='zh'?order.pickup:order.pickupEn;
+}
+function getOrderDestText(order){
+  if(order.destType==='dry'){
+    const dryNum=order.machineNumDest||order.dest;
+    if(lang==='zh'){
+      return dryNum==='任意烘干机'?`${T('destDryLabel')}：任意烘干机`:`${T('destDryLabel')}：${dryNum}`;
+    } else {
+      return dryNum==='Any Dryer'?`${T('destDryLabel')}: Any Dryer`:`${T('destDryLabel')}: ${dryNum}`;
+    }
+  } else {
+    return lang==='zh'?order.dest:order.destEn;
+  }
+}
+
+// 渲染单张订单卡片（通用）
+// context: 'accept'=我要帮取列表, 'myposted'=我发布的, 'mdposted'=我的帮取-帮我取, 'mdaccepted'=我的帮取-送货
+function renderOrderCard(order, isMyPosted=false, isMyAccepted=false, context=''){
+  const pickupText=getOrderPickupText(order);
+  const destText=getOrderDestText(order);
+  const statusTag=T('order'+order.status.charAt(0).toUpperCase()+order.status.slice(1));
+  let actionsHtml='';
+  // 接单按钮：只在"我要帮取"列表中，状态为pending时显示
+  if(!isMyPosted&&!isMyAccepted&&order.status==='pending'){
+    actionsHtml=`<div class="order-actions"><button class="accept-btn" onclick="startFaceVerify('${order.id}')">${T('acceptBtn')}</button></div>`;
+  }
+  // 确认收货按钮：只在"帮我取"（下单人视角）且状态为accepted时显示
+  if(isMyPosted&&order.status==='accepted'){
+    actionsHtml=`<div class="order-actions"><button class="confirm-receipt-btn" onclick="confirmReceipt('${order.id}')">${T('confirmReceiptBtn')}</button></div>`;
+  }
+  // 我的帮取-帮我取记录也显示确认收货
+  if(context==='mdposted'&&order.status==='accepted'){
+    actionsHtml=`<div class="order-actions"><button class="confirm-receipt-btn" onclick="confirmReceipt('${order.id}')">${T('confirmReceiptBtn')}</button></div>`;
+  }
+  let expandedHtml='';
+  const qrBld=lang==='zh'?order.qrBuilding:order.qrBuildingEn;
+  const qrLabelText=T('qrLabel').replace('{building}',qrBld);
+  // 接单人视角：我要帮取列表 或 我的帮取-送货记录(mdaccepted)
+  const isAccepterView=(!isMyPosted&&order.acceptedByMe)||isMyAccepted||(context==='mdaccepted');
+  // 接单后显示二维码（接单人视角）
+  if(isAccepterView&&(order.status==='accepted'||order.status==='completed')){
+    // mdaccepted和 isMyAccepted 都用 qr-mdacc- 前缀
+    const qrId=(isMyAccepted||context==='mdaccepted')?`qr-mdacc-${order.id}`:`qr-acc-${order.id}`;
+    expandedHtml=`<div class="order-expanded"><div class="qr-area"><div class="qr-label">${qrLabelText}</div><canvas id="${qrId}" width="100" height="100"></canvas><br><button class="qr-enlarge-btn" onclick="openQRFullscreen('${qrId}','${qrBld}')">${T('enlargeBtn')}</button></div>`;
+    if(order.status==='completed'){
+      expandedHtml+=`<div class="completed-badge" style="margin-top:10px">${T('completedMsg').replace('{fee}',order.fee)}</div>`;
+    }
+    expandedHtml+=`</div>`;
+  }
+  // 下单人视角完成态（帮我取页面 + 我的帮取-帮我取记录）
+  if((isMyPosted||context==='mdposted')&&order.status==='completed'){
+    expandedHtml=`<div class="order-expanded"><div class="completed-badge">${T('completedMsg').replace('{fee}',order.fee)}</div></div>`;
+  }
+  const machineInfo=order.machineNum?`<div style="font-size:11px;color:var(--sub);margin-top:2px">🔢 ${T('mMachine')}：${order.machineNum}</div>`:'';
+  return `<div class="order-card ${order.status}" id="card-${order.id}">
+    <div class="order-top">
+      <div class="order-route">
+        <div class="order-from">${T('fromLabel')}：<span>${pickupText}</span></div>
+        ${machineInfo}
+        <div class="order-to">${T('toLabel')}：<span>${destText}</span></div>
+      </div>
+      <div class="order-fee">${order.fee}<br><span style="font-size:11px;font-weight:500">MOP</span></div>
+    </div>
+    <div class="order-meta">
+      <span class="order-time">${getTimeAgo(order.postedAt)}</span>
+      <span class="order-status-tag ${order.status}">${statusTag}</span>
+    </div>
+    ${actionsHtml}
+    ${expandedHtml}
+  </div>`;
+}
+
+// 渲染"我要帮取"列表（只显示待接单的公开订单）
+function renderOrderList(){
+  const el=document.getElementById('order-list');if(!el)return;
+  const pendingOrders=deliveryOrders.filter(o=>o.status==='pending'&&!o.isMyOrder);
+  if(!pendingOrders.length){
+    el.innerHTML=`<div class="empty-orders">${T('emptyOrders').replace('\n','<br>')}</div>`;return;
+  }
+  el.innerHTML=pendingOrders.map(order=>renderOrderCard(order,false,false,'accept')).join('');
+}
+
+// 渲染"帮我取"页面底部的"我的下单记录"
+function renderMyPostedList(){
+  const el=document.getElementById('my-posted-list');if(!el)return;
+  const myOrders=deliveryOrders.filter(o=>o.isMyOrder);
+  if(!myOrders.length){
+    el.innerHTML=`<div style="text-align:center;color:var(--sub);font-size:13px;padding:12px 0">${T('emptyMyOrders')}</div>`;return;
+  }
+  el.innerHTML=myOrders.map(order=>renderOrderCard(order,true,false,'myposted')).join('');
+  myOrders.forEach(o=>{
+    if(o.status==='accepted'||o.status==='completed') setTimeout(()=>{},50);
+  });
+}
+
+// 发布订单
+function openDeliveryConfirm(){
+  const bld=document.getElementById('pickup-building').value;
+  const fl=document.getElementById('pickup-floor').value;
+  const machineNum=document.getElementById('pickup-machine').value.trim();
+  if(!bld){showToast(lang==='zh'?'请选择取衣楼栋':'Please select pickup building');return;}
+  if(!fl){showToast(lang==='zh'?'请选择取衣楼层':'Please select pickup floor');return;}
+  let destText='',destZh='',destEn='',machineNumDest='';
+  if(selectedDestType==='dry'){
+    const dryNum=document.getElementById('dest-dryer-num').value.trim();
+    if(!dryNum){showToast(lang==='zh'?'请填写烘干机编号':'Please enter dryer number');return;}
+    destZh=dryNum==='任意烘干机'?'任意烘干机':dryNum;
+    destEn=dryNum==='任意烘干机'||dryNum.toLowerCase()==='any dryer'?'Any Dryer':dryNum;
+    machineNumDest=destZh;
+    destText=lang==='zh'?`${T('destDryLabel')}：${destZh}`:`${T('destDryLabel')}: ${destEn}`;
+  } else {
+    const dormBld=document.getElementById('dest-building').value;
+    const dormRoom=document.getElementById('dest-room').value.trim();
+    if(!dormBld){showToast(lang==='zh'?'请选择送达楼栋':'Please select destination building');return;}
+    if(!dormRoom){showToast(lang==='zh'?'请填写宿舍号':'Please enter room number');return;}
+    destZh=`${dormBld}栋 ${dormRoom}室`;
+    destEn=`${dormBld} Bldg, Room ${dormRoom}`;
+    destText=lang==='zh'?destZh:destEn;
+  }
+  const pickupZh=`${bld}座${fl}楼洗衣房`;
+  const pickupEn=`Bldg ${bld} F${fl} Laundry Room`;
+  const pickupText=lang==='zh'?pickupZh:pickupEn;
+  const machineText=machineNum||'—';
+  const infoEl=document.getElementById('delivery-confirm-info');
+  infoEl.innerHTML=`<div class="modal-row"><span class="ml">${T('mPickup')}</span><span class="mv">${pickupText}</span></div><div class="modal-row"><span class="ml">${T('mMachine')}</span><span class="mv">${machineText}</span></div><div class="modal-row"><span class="ml">${T('mDest')}</span><span class="mv">${destText}</span></div><div class="modal-row"><span class="ml">${T('mFee')}</span><span class="mv" style="color:#27ae60;font-size:16px">${selectedFee} MOP</span></div>`;
+  // 存储临时数据
+  window._pendingOrderData={bld,fl,machineNum,destZh,destEn,machineNumDest,destType:selectedDestType};
+  document.getElementById('delivery-confirm-mask').classList.add('show');
+}
+function closeDeliveryConfirm(){document.getElementById('delivery-confirm-mask').classList.remove('show');}
+function deliveryMaskClick(e){if(e.target===document.getElementById('delivery-confirm-mask'))closeDeliveryConfirm();}
+function confirmPostOrder(){
+  const d=window._pendingOrderData;if(!d)return;
+  const {bld,fl,machineNum,destZh,destEn,machineNumDest,destType}=d;
+  const pickupZh=`${bld}座${fl}楼洗衣房`;
+  const pickupEn=`Bldg ${bld} F${fl} Laundry Room`;
+  // 确定二维码楼栋（送回宿舍用宿舍楼栋，送去烘干用取衣楼栋）
+  let qrBldZh,qrBldEn;
+  if(destType==='dorm'){
+    const dormBld=document.getElementById('dest-building').value;
+    qrBldZh=dormBld+'栋';qrBldEn=dormBld+' Bldg';
+  } else {
+    qrBldZh=bld+'座';qrBldEn='Bldg '+bld;
+  }
+  const newOrder={
+    id:'order_'+Date.now(),
+    pickup:pickupZh,pickupEn:pickupEn,
+    machineNum:machineNum||'',
+    destType:destType,
+    dest:destZh,destEn:destEn,
+    machineNumDest:machineNumDest||'',
+    fee:selectedFee,status:'pending',
+    postedAt:Date.now(),
+    isMyOrder:true,acceptedByMe:false,
+    qrBuilding:qrBldZh,qrBuildingEn:qrBldEn,
+  };
+  deliveryOrders.unshift(newOrder);
+  closeDeliveryConfirm();
+  showToast(T('toastPosted'));
+  // 重置表单
+  document.getElementById('pickup-building').value='';
+  document.getElementById('pickup-floor').innerHTML=`<option value="">${T('pickupFloorPh')}</option>`;
+  document.getElementById('pickup-floor').disabled=true;
+  document.getElementById('pickup-machine').value='';
+  document.getElementById('dest-dryer-num').value='';
+  document.getElementById('dest-building').value='';
+  document.getElementById('dest-room').value='';
+  document.getElementById('order-remark').value='';
+  document.querySelectorAll('.fee-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.fee-btn[data-fee="3"]').classList.add('active');
+  selectedFee=3;
+  selDestType('dry');
+  renderMyPostedList();
+}
+
+// 人脸验证
+function startFaceVerify(orderId){
+  pendingAcceptOrderId=orderId;
+  const mask=document.getElementById('face-verify-mask');
+  const fill=document.getElementById('face-progress-fill');
+  const statusEl=document.getElementById('face-status-text');
+  fill.style.width='0%';
+  statusEl.textContent=T('faceVerifying');
+  mask.classList.add('show');
+  let progress=0;
+  if(faceProgressTimer) clearInterval(faceProgressTimer);
+  faceProgressTimer=setInterval(()=>{
+    progress+=2;
+    fill.style.width=Math.min(progress,100)+'%';
+    if(progress>=100){
+      clearInterval(faceProgressTimer);faceProgressTimer=null;
+      statusEl.innerHTML=`<span class="face-success">${T('faceSuccess').replace('{sid}',userInfo.sid)}</span>`;
+      setTimeout(()=>{
+        mask.classList.remove('show');
+        acceptOrder(pendingAcceptOrderId);
+        pendingAcceptOrderId=null;
+      },1000);
+    }
+  },50);
+}
+function acceptOrder(orderId){
+  const order=deliveryOrders.find(o=>o.id===orderId);
+  if(!order)return;
+  order.status='accepted';
+  order.acceptedByMe=true;
+  showToast(T('toastAccepted'));
+  renderOrderList();
+  // 刷新帮我取页面的下单记录（下单人视角显示确认收货按钮）
+  renderMyPostedList();
+  // 如果我的帮取页面已打开，也同步刷新
+  if(document.getElementById('page-mydelivery').classList.contains('show')) renderMyDeliveryPage();
+}
+function confirmReceipt(orderId){
+  const order=deliveryOrders.find(o=>o.id===orderId);
+  if(!order)return;
+  order.status='completed';
+  showToast(T('toastCompleted'));
+  renderMyPostedList();
+  renderOrderList();
+  // 如果我的帮取页面打开，也刷新
+  if(document.getElementById('page-mydelivery').classList.contains('show')) renderMyDeliveryPage();
+}
+
+// 二维码绘制（纯 Canvas，黑白方块矩阵）
+function drawQR(canvasId,size){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const cells=21;
+  const cellSize=size/cells;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
+  const seed=canvasId.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const r=sRand(seed);
+  const grid=[];
+  for(let i=0;i<cells;i++){grid[i]=[];for(let j=0;j<cells;j++) grid[i][j]=r()<0.45;}
+  function drawFinder(x,y){
+    ctx.fillStyle='#000';ctx.fillRect(x*cellSize,y*cellSize,7*cellSize,7*cellSize);
+    ctx.fillStyle='#fff';ctx.fillRect((x+1)*cellSize,(y+1)*cellSize,5*cellSize,5*cellSize);
+    ctx.fillStyle='#000';ctx.fillRect((x+2)*cellSize,(y+2)*cellSize,3*cellSize,3*cellSize);
+  }
+  drawFinder(0,0);drawFinder(cells-7,0);drawFinder(0,cells-7);
+  ctx.fillStyle='#000';
+  for(let i=0;i<cells;i++){for(let j=0;j<cells;j++){
+    if((i<8&&j<8)||(i<8&&j>cells-9)||(i>cells-9&&j<8)) continue;
+    if(grid[i][j]) ctx.fillRect(j*cellSize,i*cellSize,cellSize,cellSize);
+  }}
+}
+
+function openQRFullscreen(canvasId,buildingName){
+  currentQRBuilding=buildingName;
+  const mask=document.getElementById('qr-fullscreen-mask');
+  const titleEl=document.getElementById('qr-fullscreen-title');
+  titleEl.textContent=T('qrLabel').replace('{building}',buildingName);
+  mask.classList.add('show');
+  setTimeout(()=>drawQR('qr-fullscreen-canvas',240),50);
+}
+function closeQRFullscreen(){document.getElementById('qr-fullscreen-mask').classList.remove('show');}
+
+// ══════════════════════════════════════════════════
+// 初始化
+// ══════════════════════════════════════════════════
+initDates();
+renderUsing();
+renderWashers();
+renderDryers();
+renderBookDevices();
+renderProfile();
+updateGreet();
+initAI();
+renderMyPostedList();
+</script>
+</body>
+</html>
