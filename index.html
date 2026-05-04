@@ -15,7 +15,7 @@ html,body{height:100%;font-family:-apple-system,"PingFang SC","Helvetica Neue",s
 body{margin:0;padding:0;}
 #app{width:100vw;height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden;}
 .status-bar{height:var(--sb-h);display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 10px;flex-shrink:0;background:transparent;position:relative;}
-.status-bar::before{content:'';position:absolute;top:12px;left:50%;transform:translateX(-50%);width:min(120px,28vw);height:34px;background:#000;border-radius:20px;z-index:10;}
+
 .status-bar .sb-time{font-size:15px;font-weight:600;letter-spacing:.3px;}
 .status-bar .sb-right{display:flex;align-items:center;gap:7px;}
 .status-bar .sb-signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
@@ -112,6 +112,18 @@ body{margin:0;padding:0;}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}.dot.free{background:var(--green);}.dot.busy{background:var(--red);}.dot.soon{background:var(--orange);}
 .legend{display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;}
 .legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:#555;}
+.devices-container{display:flex;gap:16px;margin-top:12px;}
+.devices-column{flex:1;min-width:0;}
+.devices-column h4{margin:0 0 8px;font-size:13px;color:#666;font-weight:600;display:flex;align-items:center;gap:6px;}
+.devices-column h4 .icon-washer{color:var(--blue);}
+.devices-column h4 .icon-dryer{color:var(--orange);}
+.devices-column .device-grid{margin-top:0;}
+/* 响应式设计：手机上单列显示，平板/电脑上双列 */
+@media (max-width:600px){
+  .devices-container{flex-direction:column;gap:20px;}
+  .devices-column{width:100%;}
+  .device-grid{grid-template-columns:1fr;}
+}
 /* 预约页 */
 .date-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;}.date-scroll::-webkit-scrollbar{display:none;}
 .date-chip{flex-shrink:0;width:52px;height:66px;border-radius:14px;border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;background:#fff;transition:all .15s;user-select:none;-webkit-tap-highlight-color:transparent;}
@@ -165,7 +177,7 @@ body{margin:0;padding:0;}
 #page-register{position:absolute;inset:0;background:linear-gradient(160deg,var(--blue) 0%,var(--purple) 100%);z-index:500;display:flex;flex-direction:column;overflow-y:auto;}
 #page-register::-webkit-scrollbar{display:none;}
 .reg-status-bar{height:var(--sb-h);display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 10px;flex-shrink:0;position:relative;}
-.reg-status-bar::before{content:'';position:absolute;top:12px;left:50%;transform:translateX(-50%);width:min(120px,28vw);height:34px;background:rgba(0,0,0,.55);border-radius:20px;z-index:10;}
+
 .reg-status-bar .sb-time{font-size:15px;font-weight:600;color:#fff;}
 .reg-status-bar .sb-right{display:flex;align-items:center;gap:7px;color:#fff;}
 /* 注册页语言按钮 */
@@ -406,7 +418,7 @@ body{margin:0;padding:0;}
   </div>
   <div class="card">
     <div class="sec-header">
-      <div class="card-title" style="margin-bottom:0"><div class="bar"></div><span data-i18n="washerStatus">洗衣机状态</span></div>
+      <div class="card-title" style="margin-bottom:0"><div class="bar"></div><span>设备状态</span></div>
     </div>
     <div class="loc-filter" id="hb-filter">
       <div class="loc-chip active" data-b="all" onclick="hFilter(this,'b')" data-i18n-chip="all">全部</div>
@@ -424,34 +436,21 @@ body{margin:0;padding:0;}
       <div class="loc-chip" data-f="4" onclick="hFilter(this,'f')" data-i18n="floor4">4楼</div>
       <div class="loc-chip" data-f="5" onclick="hFilter(this,'f')" data-i18n="floor5">5楼</div>
     </div>
-    <div class="device-grid" id="home-washer-list"></div>
+    <div class="devices-container">
+      <div class="devices-column">
+        <h4><span class="icon-washer">🫧</span><span data-i18n="washerStatus">洗衣机</span></h4>
+        <div class="device-grid" id="home-washer-list"></div>
+      </div>
+      <div class="devices-column">
+        <h4><span class="icon-dryer">🌀</span><span data-i18n="dryerStatus">烘干机</span></h4>
+        <div class="device-grid" id="home-dryer-list"></div>
+      </div>
+    </div>
     <div class="legend">
       <div class="legend-item"><div class="dot free"></div><span data-i18n="free">空闲</span></div>
       <div class="legend-item"><div class="dot soon"></div><span data-i18n="soon">即将空闲</span></div>
       <div class="legend-item"><div class="dot busy"></div><span data-i18n="busy">使用中</span></div>
     </div>
-  </div>
-  <div class="card" style="margin-bottom:20px">
-    <div class="sec-header">
-      <div class="card-title" style="margin-bottom:0"><div class="bar orange"></div><span data-i18n="dryerStatus">烘干机状态</span></div>
-    </div>
-    <div class="loc-filter" id="hdb-filter">
-      <div class="loc-chip active" data-db="all" onclick="hDFilter(this,'b')" data-i18n="all">全部</div>
-      <div class="loc-chip" data-db="A" onclick="hDFilter(this,'b')">A</div>
-      <div class="loc-chip" data-db="B" onclick="hDFilter(this,'b')">B</div>
-      <div class="loc-chip" data-db="C" onclick="hDFilter(this,'b')">C</div>
-      <div class="loc-chip" data-db="D" onclick="hDFilter(this,'b')">D</div>
-      <div class="loc-chip" data-db="P" onclick="hDFilter(this,'b')">P</div>
-    </div>
-    <div class="loc-filter" id="hdf-filter">
-      <div class="loc-chip active" data-df="all" onclick="hDFilter(this,'f')" data-i18n="all">全部</div>
-      <div class="loc-chip" data-df="1" onclick="hDFilter(this,'f')" data-i18n="floor1">1楼</div>
-      <div class="loc-chip" data-df="2" onclick="hDFilter(this,'f')" data-i18n="floor2">2楼</div>
-      <div class="loc-chip" data-df="3" onclick="hDFilter(this,'f')" data-i18n="floor3">3楼</div>
-      <div class="loc-chip" data-df="4" onclick="hDFilter(this,'f')" data-i18n="floor4">4楼</div>
-      <div class="loc-chip" data-df="5" onclick="hDFilter(this,'f')" data-i18n="floor5">5楼</div>
-    </div>
-    <div class="device-grid" id="home-dryer-list"></div>
   </div>
 </div>
 
@@ -1178,6 +1177,7 @@ let hWB='all',hWF='all',hDB='all',hDF='all';
 // isMyOrder=true: 我发布的（帮我取）; acceptedByMe=true: 我接的（送货）
 let deliveryOrders=[
   {id:'order_001',
+   pickupBuilding:'P',pickupFloor:'5',
    pickup:'P座5楼洗衣房',pickupEn:'Bldg P F5 Laundry Room',
    machineNum:'W-P501',
    destType:'dorm',
@@ -1186,6 +1186,7 @@ let deliveryOrders=[
    isMyOrder:false,acceptedByMe:false,
    qrBuilding:'A1栋',qrBuildingEn:'A1 Bldg'},
   {id:'order_002',
+   pickupBuilding:'B',pickupFloor:'3',
    pickup:'B座3楼洗衣房',pickupEn:'Bldg B F3 Laundry Room',
    machineNum:'W-B301',
    destType:'dry',
@@ -1356,16 +1357,12 @@ function hFilter(el,type){
   const id=type==='b'?'hb-filter':'hf-filter';
   document.querySelectorAll('#'+id+' .loc-chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
-  if(type==='b') hWB=el.dataset.b; else hWF=el.dataset.f;
+  if(type==='b'){hWB=el.dataset.b;hDB=el.dataset.b;}
+  else{hWF=el.dataset.f;hDF=el.dataset.f;}
   renderWashers();
-}
-function hDFilter(el,type){
-  const id=type==='b'?'hdb-filter':'hdf-filter';
-  document.querySelectorAll('#'+id+' .loc-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  if(type==='b') hDB=el.dataset.db; else hDF=el.dataset.df;
   renderDryers();
 }
+
 function locStr(b,f){return lang==='zh'?`${b}${T('locBuilding')} ${f}${T('locFloor')}`:`${T('locBuilding')}${b} ${T('locFloor')}${f}`;}
 function renderWashers(){
   const list=[];
@@ -1640,7 +1637,10 @@ function renderOrderCard(order, isMyPosted=false, isMyAccepted=false, context=''
   const statusTag=T('order'+order.status.charAt(0).toUpperCase()+order.status.slice(1));
   let actionsHtml='';
   // 接单按钮：只在"我要帮取"列表中，状态为pending时显示
-  if(!isMyPosted&&!isMyAccepted&&order.status==='pending'){
+  // 如果是自己的订单，显示"我的订单"标签
+  if(!isMyPosted&&!isMyAccepted&&order.status==='pending'&&order.isMyOrder){
+    actionsHtml=`<div class="order-actions"><span style="color:#999;font-size:13px;">我的订单（不能接自己的单）</span></div>`;
+  } else if(!isMyPosted&&!isMyAccepted&&order.status==='pending'){
     actionsHtml=`<div class="order-actions"><button class="accept-btn" onclick="startFaceVerify('${order.id}')">${T('acceptBtn')}</button></div>`;
   }
   // 确认收货按钮：只在"帮我取"（下单人视角）且状态为accepted时显示
@@ -1692,7 +1692,7 @@ function renderOrderCard(order, isMyPosted=false, isMyAccepted=false, context=''
 // 渲染"我要帮取"列表（只显示待接单的公开订单）
 function renderOrderList(){
   const el=document.getElementById('order-list');if(!el)return;
-  const pendingOrders=deliveryOrders.filter(o=>o.status==='pending'&&!o.isMyOrder);
+  const pendingOrders=deliveryOrders.filter(o=>o.status==='pending');
   if(!pendingOrders.length){
     el.innerHTML=`<div class="empty-orders">${T('emptyOrders').replace('\n','<br>')}</div>`;return;
   }
@@ -1764,6 +1764,7 @@ function confirmPostOrder(){
   const newOrder={
     id:'order_'+Date.now(),
     pickup:pickupZh,pickupEn:pickupEn,
+    pickupBuilding:bld,pickupFloor:fl,
     machineNum:machineNum||'',
     destType:destType,
     dest:destZh,destEn:destEn,
