@@ -620,7 +620,7 @@ body{margin:0;padding:0;}
     <div class="profile-header-inner">
       <div class="avatar">👤</div>
       <div>
-        <div class="p-name" id="prof-name">李明 <span style="display:inline-flex;align-items:center;background:linear-gradient(135deg,#f7971e,#ffd700);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:600;vertical-align:middle;">⭐ <span id="header-points">10</span> 积分</span></div>
+        <div class="p-name" id="prof-name"><span id="header-name">李明</span> <span style="display:inline-flex;align-items:center;background:linear-gradient(135deg,#f7971e,#ffd700);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:600;vertical-align:middle;">⭐ <span id="header-points">3</span> 积分</span></div>
         <div class="p-id" id="prof-id"><span data-i18n="studentId">学号：</span><span id="prof-id-num">2021010234</span></div>
         <div class="p-tag" id="prof-tag" data-i18n="profTag">计算机学院 · 大三</div>
       </div>
@@ -628,7 +628,7 @@ body{margin:0;padding:0;}
   </div>
   <div class="stats-row">
     <div class="stat-item"><div class="stat-num" id="stat-total">28</div><div class="stat-lbl" data-i18n="totalUse">累计使用</div></div>
-    <div class="stat-item"><div class="stat-num" id="stat-points" style="color:#f7971e;font-weight:800">10</div><div class="stat-lbl">我的积分</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-points" style="color:#f7971e;font-weight:800">3</div><div class="stat-lbl">我的积分</div></div>
     <div class="stat-item"><div class="stat-num" id="stat-noshow">0</div><div class="stat-lbl" data-i18n="noshow">违约次数</div></div>
   </div>
   <!-- 积分规则说明 -->
@@ -1166,7 +1166,7 @@ BUILDINGS.forEach(b=>{
 });
 
 let currentUsing={id:'W-P503',b:'P',f:5,type:'washer',remaining:18,total:45};
-let userInfo={name:'李明',sid:'2021010234',points:10};
+let userInfo={name:'李明',sid:'2021010234',points:3};
 let records=[
   {icon:'🫧',dc:'',id:'W-P503',type:'washer',b:'P',f:5,date:'today',slot:'09:00',st:'ongoing'},
   {icon:'🌀',dc:'dryer',id:'D-B302',type:'dryer',b:'B',f:3,date:'04/26',slot:'14:00',st:'done'},
@@ -1261,8 +1261,8 @@ function doRegister(){
   if(school!=='must'){showToast(T('regErrSchoolWrong'));return;}
   if(!name){showToast(T('regErrName'));return;}
   if(!sid){showToast(T('regErrId'));return;}
-  userInfo={name,sid};
-  document.getElementById('prof-name').textContent=name;
+  userInfo={name,sid,points:userInfo.points||3};
+  const headerNameEl=document.getElementById('header-name');if(headerNameEl) headerNameEl.textContent=name;
   document.getElementById('prof-id-num').textContent=sid;
   document.getElementById('banner-name').textContent=name+T('studentSuffix');
   document.getElementById('page-register').style.display='none';
@@ -1485,15 +1485,15 @@ function renderProfile(){
   if(totalEl) totalEl.textContent=28+records.filter(r=>r.st==='done').length;
   if(monthEl) monthEl.textContent=records.filter(r=>r.st!=='cancelled').length;
   if(noshowEl) noshowEl.textContent=0;
+  const nameEl=document.getElementById('header-name');if(nameEl) nameEl.textContent=userInfo.name;
+  const profIdNum=document.getElementById('prof-id-num');if(profIdNum) profIdNum.textContent=userInfo.sid;
+  const bannerName=document.getElementById('banner-name');if(bannerName) bannerName.textContent=userInfo.name+T('studentSuffix');
+  updatePointsDisplay();
   const el=document.getElementById('profile-records');if(!el)return;
   const stLabel={ongoing:T('recOngoing'),done:T('recDone'),cancelled:T('recCancelled')};
   const devLabel=r=>r.type==='washer'?T('washerLabel'):T('dryerLabel');
   const recLocStr=r=>lang==='zh'?`${r.b}座 ${r.f}楼 · ${r.date} ${r.slot}`:`Bldg ${r.b} F${r.f} · ${r.date} ${r.slot}`;
   el.innerHTML=records.slice(0,5).map(r=>`<div class="rec-item"><div class="rec-icon ${r.dc}">${r.icon}</div><div class="rec-info"><div class="rec-name">${r.id} · ${devLabel(r)}</div><div class="rec-detail">${recLocStr(r)}</div></div><div class="rec-status ${r.st}">${stLabel[r.st]}</div></div>`).join('');
-  document.getElementById('prof-name').textContent=userInfo.name;
-  document.getElementById('prof-id-num').textContent=userInfo.sid;
-  document.getElementById('banner-name').textContent=userInfo.name+T('studentSuffix');
-  updatePointsDisplay();
 }
 function doLogout(){
   showToast(T('toastLogout'));
