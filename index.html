@@ -262,9 +262,9 @@ body{margin:0;padding:0;}
 .dest-sub{display:flex;gap:8px;margin-top:4px;}
 .dest-sub .sel-wrap{flex:1;}
 .dest-sub input{flex:1;min-width:0;}
-.fee-btns{display:flex;gap:8px;}
-.fee-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:14px;font-weight:700;cursor:pointer;color:#555;background:#fff;transition:all .15s;-webkit-tap-highlight-color:transparent;}
-.fee-btn.active{border-color:#f7971e;background:#fff8e6;color:#f7971e;}
+.points-btns{display:flex;gap:8px;}
+.points-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:14px;font-weight:700;cursor:pointer;color:#555;background:#fff;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.points-btn.active{border-color:#f7971e;background:#fff8e6;color:#f7971e;}
 .post-btn{width:100%;padding:14px;background:linear-gradient(90deg,#f7971e,#ffd200);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;box-shadow:0 4px 16px rgba(247,151,30,.35);margin-bottom:20px;}
 .order-list{margin:12px 16px 20px;}
 .order-card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);border:1.5px solid var(--border);}
@@ -580,11 +580,11 @@ body{margin:0;padding:0;}
       </div>
 
       <div class="form-field">
-        <label data-i18n="serviceFee">服务费用</label>
-        <div class="fee-btns">
-          <div class="fee-btn active" data-fee="3" onclick="selFee(this)">3 MOP</div>
-          <div class="fee-btn" data-fee="4" onclick="selFee(this)">4 MOP</div>
-          <div class="fee-btn" data-fee="5" onclick="selFee(this)">5 MOP</div>
+        <label>消耗积分</label>
+        <div class="points-btns">
+          <div class="points-btn active" data-points="1" onclick="selPointsCost(this)">1 积分</div>
+          <div class="points-btn" data-points="2" style="display:none;" onclick="selPointsCost(this)">2 积分</div>
+          <div class="points-btn" data-points="3" style="display:none;" onclick="selPointsCost(this)">3 积分</div>
         </div>
       </div>
       <div class="form-field">
@@ -620,7 +620,7 @@ body{margin:0;padding:0;}
     <div class="profile-header-inner">
       <div class="avatar">👤</div>
       <div>
-        <div class="p-name" id="prof-name">李明</div>
+        <div class="p-name" id="prof-name">李明 <span style="display:inline-flex;align-items:center;background:linear-gradient(135deg,#f7971e,#ffd700);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:600;vertical-align:middle;">⭐ <span id="header-points">10</span> 积分</span></div>
         <div class="p-id" id="prof-id"><span data-i18n="studentId">学号：</span><span id="prof-id-num">2021010234</span></div>
         <div class="p-tag" id="prof-tag" data-i18n="profTag">计算机学院 · 大三</div>
       </div>
@@ -628,10 +628,15 @@ body{margin:0;padding:0;}
   </div>
   <div class="stats-row">
     <div class="stat-item"><div class="stat-num" id="stat-total">28</div><div class="stat-lbl" data-i18n="totalUse">累计使用</div></div>
-    <div class="stat-item"><div class="stat-num" id="stat-month">3</div><div class="stat-lbl" data-i18n="monthBook">本月预约</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-points" style="color:#f7971e;font-weight:800">10</div><div class="stat-lbl">我的积分</div></div>
     <div class="stat-item"><div class="stat-num" id="stat-noshow">0</div><div class="stat-lbl" data-i18n="noshow">违约次数</div></div>
   </div>
-  <div class="card" style="margin-top:20px">
+  <!-- 积分规则说明 -->
+  <div style="background:linear-gradient(90deg,#fff8e6,#fff3e6);border-radius:12px;padding:12px 16px;margin:16px 20px 0;display:flex;align-items:center;gap:10px;font-size:13px;color:#666;">
+    <span style="font-size:18px;">💡</span>
+    <span><b style="color:#f7971e;">积分规则：</b>发布订单消耗 <b style="color:#e74c3c;">-1</b> 积分 · 接单完成赚取 <b style="color:#27ae60;">+1</b> 积分</span>
+  </div>
+  <div class="card" style="margin-top:16px">
     <div class="sec-header">
       <div class="card-title" style="margin-bottom:0"><div class="bar"></div><span data-i18n="myRecords">我的预约记录</span></div>
       <span class="more" data-i18n="viewAll">全部 ›</span>
@@ -1161,7 +1166,7 @@ BUILDINGS.forEach(b=>{
 });
 
 let currentUsing={id:'W-P503',b:'P',f:5,type:'washer',remaining:18,total:45};
-let userInfo={name:'李明',sid:'2021010234'};
+let userInfo={name:'李明',sid:'2021010234',points:10};
 let records=[
   {icon:'🫧',dc:'',id:'W-P503',type:'washer',b:'P',f:5,date:'today',slot:'09:00',st:'ongoing'},
   {icon:'🌀',dc:'dryer',id:'D-B302',type:'dryer',b:'B',f:3,date:'04/26',slot:'14:00',st:'done'},
@@ -1182,7 +1187,7 @@ let deliveryOrders=[
    machineNum:'W-P501',
    destType:'dorm',
    dest:'A1栋 301室',destEn:'A1 Bldg, Room 301',
-   fee:5,status:'pending',postedAt:Date.now()-5*60*1000,
+   pointsCost:1,status:'pending',postedAt:Date.now()-5*60*1000,
    isMyOrder:false,acceptedByMe:false,
    qrBuilding:'A1栋',qrBuildingEn:'A1 Bldg'},
   {id:'order_002',
@@ -1191,11 +1196,11 @@ let deliveryOrders=[
    machineNum:'W-B301',
    destType:'dry',
    dest:'任意烘干机',destEn:'Any Dryer',
-   fee:3,status:'pending',postedAt:Date.now()-12*60*1000,
+   pointsCost:1,status:'pending',postedAt:Date.now()-12*60*1000,
    isMyOrder:false,acceptedByMe:false,
    qrBuilding:'B座',qrBuildingEn:'Bldg B'},
 ];
-let selectedFee=3;
+let selectedPointsCost=1;
 let selectedDestType='dry'; // 'dry' or 'dorm'
 let pendingAcceptOrderId=null;
 let faceProgressTimer=null;
@@ -1235,10 +1240,10 @@ function selDestType(type){
   document.getElementById('dest-dorm-area').style.display=type==='dorm'?'flex':'none';
 }
 
-function selFee(el){
+function selPointsCost(el){
   document.querySelectorAll('.fee-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  selectedFee=parseInt(el.dataset.fee);
+  selectedPointsCost=parseInt(el.dataset.points);
 }
 
 // ══════════════════════════════════════════════════
@@ -1469,6 +1474,12 @@ function confirmBook(){
 // ══════════════════════════════════════════════════
 // 我的页
 // ══════════════════════════════════════════════════
+function updatePointsDisplay(){
+  const el=document.getElementById('stat-points');
+  if(el) el.textContent=userInfo.points;
+  const headerEl=document.getElementById('header-points');
+  if(headerEl) headerEl.textContent=userInfo.points;
+}
 function renderProfile(){
   const totalEl=document.getElementById('stat-total'),monthEl=document.getElementById('stat-month'),noshowEl=document.getElementById('stat-noshow');
   if(totalEl) totalEl.textContent=28+records.filter(r=>r.st==='done').length;
@@ -1482,6 +1493,7 @@ function renderProfile(){
   document.getElementById('prof-name').textContent=userInfo.name;
   document.getElementById('prof-id-num').textContent=userInfo.sid;
   document.getElementById('banner-name').textContent=userInfo.name+T('studentSuffix');
+  updatePointsDisplay();
 }
 function doLogout(){
   showToast(T('toastLogout'));
@@ -1678,7 +1690,7 @@ function renderOrderCard(order, isMyPosted=false, isMyAccepted=false, context=''
         ${machineInfo}
         <div class="order-to">${T('toLabel')}：<span>${destText}</span></div>
       </div>
-      <div class="order-fee">${order.fee}<br><span style="font-size:11px;font-weight:500">MOP</span></div>
+      <div class="order-fee">${order.pointsCost}<br><span style="font-size:11px;font-weight:500">积分</span></div>
     </div>
     <div class="order-meta">
       <span class="order-time">${getTimeAgo(order.postedAt)}</span>
@@ -1714,6 +1726,7 @@ function renderMyPostedList(){
 
 // 发布订单
 function openDeliveryConfirm(){
+  if(userInfo.points<1){showToast("积分不足，请先去接单赚取积分！");return;}
   const bld=document.getElementById('pickup-building').value;
   const fl=document.getElementById('pickup-floor').value;
   const machineNum=document.getElementById('pickup-machine').value.trim();
@@ -1741,7 +1754,7 @@ function openDeliveryConfirm(){
   const pickupText=lang==='zh'?pickupZh:pickupEn;
   const machineText=machineNum||'—';
   const infoEl=document.getElementById('delivery-confirm-info');
-  infoEl.innerHTML=`<div class="modal-row"><span class="ml">${T('mPickup')}</span><span class="mv">${pickupText}</span></div><div class="modal-row"><span class="ml">${T('mMachine')}</span><span class="mv">${machineText}</span></div><div class="modal-row"><span class="ml">${T('mDest')}</span><span class="mv">${destText}</span></div><div class="modal-row"><span class="ml">${T('mFee')}</span><span class="mv" style="color:#27ae60;font-size:16px">${selectedFee} MOP</span></div>`;
+  infoEl.innerHTML=`<div class="modal-row"><span class="ml">${T('mPickup')}</span><span class="mv">${pickupText}</span></div><div class="modal-row"><span class="ml">${T('mMachine')}</span><span class="mv">${machineText}</span></div><div class="modal-row"><span class="ml">${T('mDest')}</span><span class="mv">${destText}</span></div><div class="modal-row"><span class="ml">消耗积分</span><span class="mv" style="color:#27ae60;font-size:16px">${selectedPointsCost} 积分</span></div>`;
   // 存储临时数据
   window._pendingOrderData={bld,fl,machineNum,destZh,destEn,machineNumDest,destType:selectedDestType};
   document.getElementById('delivery-confirm-mask').classList.add('show');
@@ -1751,6 +1764,7 @@ function deliveryMaskClick(e){if(e.target===document.getElementById('delivery-co
 function confirmPostOrder(){
   const d=window._pendingOrderData;if(!d)return;
   const {bld,fl,machineNum,destZh,destEn,machineNumDest,destType}=d;
+  userInfo.points-=selectedPointsCost;updatePointsDisplay();
   const pickupZh=`${bld}座${fl}楼洗衣房`;
   const pickupEn=`Bldg ${bld} F${fl} Laundry Room`;
   // 确定二维码楼栋（送回宿舍用宿舍楼栋，送去烘干用取衣楼栋）
@@ -1769,7 +1783,7 @@ function confirmPostOrder(){
     destType:destType,
     dest:destZh,destEn:destEn,
     machineNumDest:machineNumDest||'',
-    fee:selectedFee,status:'pending',
+    pointsCost:selectedPointsCost,status:'pending',
     postedAt:Date.now(),
     isMyOrder:true,acceptedByMe:false,
     qrBuilding:qrBldZh,qrBuildingEn:qrBldEn,
@@ -1786,9 +1800,9 @@ function confirmPostOrder(){
   document.getElementById('dest-building').value='';
   document.getElementById('dest-room').value='';
   document.getElementById('order-remark').value='';
-  document.querySelectorAll('.fee-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.fee-btn[data-fee="3"]').classList.add('active');
-  selectedFee=3;
+  document.querySelectorAll('.points-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.points-btn[data-points="1"]').classList.add('active');
+  selectedPointsCost=1;
   selDestType('dry');
   renderMyPostedList();
 }
@@ -1823,7 +1837,8 @@ function acceptOrder(orderId){
   if(!order)return;
   order.status='accepted';
   order.acceptedByMe=true;
-  showToast(T('toastAccepted'));
+  userInfo.points+=1;updatePointsDisplay();
+  showToast('接单成功！获得1积分');
   renderOrderList();
   // 刷新帮我取页面的下单记录（下单人视角显示确认收货按钮）
   renderMyPostedList();
